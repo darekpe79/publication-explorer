@@ -1,8 +1,53 @@
 (() => {
   "use strict";
 
+  const BRAND = "ScholarScope";
+  const SUBTITLE = "Publication & Journal Explorer";
+  const AUTHOR = "Dariusz Perliński";
+
   function setTextIfNeeded(element, text) {
     if (element && element.textContent.trim() !== text) element.textContent = text;
+  }
+
+  function setMeta(selector, value) {
+    const element = document.querySelector(selector);
+    if (element) element.setAttribute("content", value);
+  }
+
+  function applyBranding() {
+    document.title = `${BRAND} · ${SUBTITLE}`;
+    setMeta('meta[name="description"]', `${BRAND}: eksploracja publikacji naukowych, czasopism, Open Access, bibliometrii i danych MNiSW.`);
+    setMeta('meta[property="og:title"]', `${BRAND} · ${SUBTITLE}`);
+    setMeta('meta[name="twitter:title"]', `${BRAND} · ${SUBTITLE}`);
+
+    const eyebrow = document.querySelector(".eyebrow");
+    if (eyebrow && !eyebrow.dataset.scholarScopeBranded) {
+      eyebrow.innerHTML = `<span class="eyebrow-dot"></span>${BRAND} · ${SUBTITLE}`;
+      eyebrow.dataset.scholarScopeBranded = "true";
+    }
+
+    const lead = document.querySelector(".lead");
+    setTextIfNeeded(
+      lead,
+      "Sprawdź publikację lub czasopismo, porównaj informacje z kilku niezależnych źródeł i znajdź czasopisma według dyscypliny, punktacji oraz Open Access."
+    );
+
+    const aboutIntro = document.querySelector("#tab-about .about-card > p");
+    if (aboutIntro) {
+      setTextIfNeeded(
+        aboutIntro,
+        `${BRAND} łączy dane bibliograficzne, bibliometryczne, Open Access oraz informacje o czasopismach. Każdy sygnał pozostaje przypisany do źródła — aplikacja nie tworzy jednego „wyniku jakości” czasopisma.`
+      );
+    }
+
+    let footer = document.querySelector(".author-credit");
+    if (!footer) {
+      footer = document.createElement("p");
+      footer.className = "footer-note author-credit";
+      footer.innerHTML = `${BRAND} · ${SUBTITLE} · © 2026 ${AUTHOR} · <a href="https://github.com/darekpe79/publication-explorer/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>`;
+      const main = document.querySelector("main.page");
+      if (main) main.appendChild(footer);
+    }
   }
 
   function addDisciplineHint(wrap) {
@@ -18,6 +63,8 @@
   }
 
   function applyGuidance() {
+    applyBranding();
+
     setTextIfNeeded(
       document.querySelector("#search-help span"),
       "Wklej DOI (sam identyfikator, „doi:…” albo adres doi.org). Po wyszukaniu zobaczysz metadane publikacji, dostęp Open Access, cytowania i informacje o czasopiśmie."
