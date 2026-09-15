@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Publication Explorer: sprawdzanie publikacji i czasopism z użyciem Crossref, OpenAlex, MNiSW, DOAJ oraz innych otwartych źródeł." />
+    <meta property="og:title" content="Publication Explorer" />
+    <meta property="og:description" content="Sprawdź publikację lub czasopismo: metadane, bibliometria, Open Access, MNiSW, DOAJ i inne źródła." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Publication Explorer" />
+    <meta name="twitter:description" content="Sprawdź publikację lub czasopismo: metadane, bibliometria, Open Access, MNiSW, DOAJ i inne źródła." />
+    <meta name="twitter:image" content="og.png" />
+    <title>Publication Explorer · Crossref, OpenAlex, MNiSW, DOAJ</title>
+    <link rel="stylesheet" href="./assets/css/app.css" />
+</head>
+  <body>
+    <main class="page">
+      <div class="eyebrow"><span class="eyebrow-dot"></span>Publication Explorer</div>
+      <h1>Sprawdź publikację, czasopismo albo znajdź miejsce publikacji.</h1>
+      <p class="lead">POC rozdziela dane konkretnej publikacji od danych całego czasopisma. Możesz zacząć od DOI, ISSN/tytułu albo dyscypliny MNiSW i porównać informacje z kilku niezależnych źródeł.</p>
+      <div class="sources-intro" aria-label="Wykorzystywane źródła">
+        <span class="source-pill openalex">OpenAlex · status OA i lokalizacje</span>
+        <span class="source-pill crossref">Crossref · metadane i linki wydawcy</span>
+        <span class="source-pill ministry">Wykaz ministerialny 05.01.2024 · punkty i dyscypliny czasopisma</span>
+        <span class="source-pill doaj">DOAJ · OA, APC, licencje i polityki czasopisma</span>
+        <span class="source-pill ddh">DDH · Diamond Open Access</span>
+        <span class="source-pill issn">ISSN Portal · identyfikacja czasopisma</span>
+        <span class="source-pill">ICI · wyszukiwanie czasopisma</span>
+      </div>
+
+      <nav class="app-tabs" aria-label="Tryb pracy">
+        <button class="app-tab active" type="button" data-tab="publication">Publikacja</button>
+        <button class="app-tab" type="button" data-tab="journal">Czasopismo</button>
+        <button class="app-tab" type="button" data-tab="finder">Znajdź czasopismo</button>
+        <button class="app-tab" type="button" data-tab="about">About / źródła</button>
+      </nav>
+
+      <section class="tab-panel" id="tab-publication" data-tab-panel="publication">
+        <form class="search-card" id="search-form" novalidate>
+          <label for="doi-input">DOI publikacji</label>
+          <div class="search-row">
+            <input id="doi-input" name="doi" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="np. 10.1002/14651858.CD010438" aria-describedby="search-help" />
+            <button class="search-button" id="search-button" type="submit">Szukaj publikacji</button>
+          </div>
+          <div class="search-help" id="search-help">
+            <span>Możesz wkleić sam DOI, „doi:…” albo pełny adres doi.org.</span>
+            <button class="example-button" id="example-button" type="button">Wstaw przykład</button>
+          </div>
+        </form>
+        <div class="message" id="message" role="status" aria-live="polite"></div>
+        <div class="loading" id="loading" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span>Pobieram i porównuję rekordy OpenAlex oraz Crossref…</span></div>
+        <article class="result-card" id="result" aria-live="polite"></article>
+      </section>
+
+      <section class="tab-panel" id="tab-journal" data-tab-panel="journal" hidden>
+        <form class="search-card" id="journal-search-form" novalidate>
+          <label for="journal-query">ISSN lub tytuł czasopisma</label>
+          <div class="journal-search-grid">
+            <input id="journal-query" type="text" autocomplete="off" spellcheck="false" placeholder="np. 0031-0514 albo Pamiętnik Literacki" />
+            <button class="search-button" type="submit">Szukaj czasopisma</button>
+          </div>
+          <div class="search-help"><span>Dokładny ISSN otwiera pełny profil od razu. Wyszukiwanie po tytule lub jego fragmencie korzysta lokalnie z wykazu MNiSW 05.01.2024 i pokazuje listę pasujących czasopism.</span></div>
+        </form>
+        <div class="message" id="journal-message" role="status" aria-live="polite"></div>
+        <div class="loading" id="journal-loading"><span class="spinner"></span><span>Pobieram profil czasopisma…</span></div>
+        <div class="journal-list" id="journal-search-results"></div>
+        <article class="result-card" id="journal-result" aria-live="polite"></article>
+      </section>
+
+      <section class="tab-panel" id="tab-finder" data-tab-panel="finder" hidden>
+        <form class="search-card" id="finder-form">
+          <div class="finder-grid">
+            <div class="field-stack"><label for="discipline-select">Dyscyplina czasopisma · MNiSW 2024</label><select id="discipline-select"></select></div>
+            <div class="field-stack"><label for="points-from">Punkty od</label><select id="points-from"><option>20</option><option>40</option><option>70</option><option>100</option><option>140</option><option>200</option></select></div>
+            <div class="field-stack"><label for="points-to">Punkty do</label><select id="points-to"><option>20</option><option>40</option><option>70</option><option>100</option><option>140</option><option selected>200</option></select></div>
+            <div class="field-stack"><label for="oa-filter">Open Access</label><select id="oa-filter">
+              <option value="any">Wszystkie czasopisma (OA i nie-OA)</option>
+              <option value="oa_any">Fully OA — DOAJ lub OpenAlex</option>
+              <option value="doaj">Tylko czasopisma w DOAJ</option>
+              <option value="openalex">Fully OA wg OpenAlex</option>
+            </select></div>
+            <button class="search-button" type="submit">Pokaż</button>
+          </div>
+          <div class="search-help"><span>Wybierz dyscyplinę i zakres punktów MNiSW. Wyniki nie są rankingiem „Top” — czasopisma spełniające kryteria są prezentowane alfabetycznie. Przy filtrze OA aplikacja sprawdza na żywo DOAJ i/lub OpenAlex; ze względu na liczbę zapytań sprawdzanych jest maksymalnie 60 pierwszych alfabetycznie czasopism z wybranego zakresu.</span></div>
+        </form>
+        <div class="message" id="finder-message"></div>
+        <div class="journal-list" id="finder-results"></div>
+        <article class="result-card" id="finder-journal-result"></article>
+      </section>
+
+      <section class="tab-panel" id="tab-about" data-tab-panel="about" hidden>
+        <div class="about-card">
+          <h2>About · Sources & Methodology</h2>
+          <p>Publication Explorer jest demonstratorem łączącym dane bibliograficzne, bibliometryczne, Open Access oraz informacje o czasopismach. Każdy sygnał pozostaje przypisany do źródła — aplikacja nie tworzy jednego „wyniku jakości” czasopisma.</p>
+          <table class="about-table"><thead><tr><th>Źródło</th><th>Jak korzystamy</th></tr></thead><tbody>
+            <tr><td><strong>Crossref</strong></td><td>Metadane DOI, bibliografia oraz źródłowa liczba <em>is-referenced-by</em>.</td></tr>
+            <tr><td><strong>OpenAlex</strong></td><td>Dla publikacji: status OA, cytowania, FWCI, lokalizacje i topiki konkretnej pracy. Dla czasopisma: status OA źródła, metryki oraz pole <code>topics</code>. Nie używamy <code>topic_share</code> jako zamiennika listy topiców, ponieważ opisuje inną właściwość źródła.</td></tr>
+            <tr><td><strong>MNiSW</strong></td><td>Dane na poziomie czasopisma: wykaz 2024 daje aktualne punkty i dyscypliny czasopisma; wykazy 2019, 2021 i 2023 służą do historii punktacji.</td></tr>
+            <tr><td><strong>DOAJ</strong></td><td>Status OA, APC, waiver, licencje, peer review, czas publikacji i preservation — gdy rekord zawiera te dane.</td></tr>
+            <tr><td><strong>ISSN Portal</strong></td><td>Próbujemy pobrać publiczne, podstawowe metadane JSON-LD; zawsze podajemy również bezpośrednie linki dla każdego ISSN.</td></tr>
+            <tr><td><strong>Diamond Discovery Hub</strong></td><td>Na tym etapie inteligentne wyszukiwanie po ISSN. DDH udostępnia również OAI-PMH/JMEF z kryteriami Diamond OA do późniejszej pełnej integracji.</td></tr>
+            <tr><td><strong>Open Policy Finder</strong></td><td>Inteligentne linki po ISSN do polityk samoarchiwizacji i Open Access. Pełne API wymaga klucza, dlatego nie umieszczamy go w publicznym HTML.</td></tr>
+            <tr><td><strong>SCImago</strong></td><td>Inteligentne linki po ISSN do SJR, kwartylu i innych wskaźników czasopisma.</td></tr>
+            <tr><td><strong>Index Copernicus / ICI World of Journals</strong></td><td>Inteligentny link po tytule czasopisma do wyszukiwarki ICI; ISSN pokazujemy obok jako identyfikator do ręcznej weryfikacji. Obecność rekordu w ICI World of Journals nie jest utożsamiana z indeksacją w ICI Journals Master List ani z określoną wartością ICV.</td></tr>
+            <tr><td><strong>JUFO / COPE</strong></td><td>Linki kontrolne do niezależnego sprawdzenia klasyfikacji i standardów wydawniczych; nie interpretujemy braku wyniku jako oceny czasopisma.</td></tr>
+          </tbody></table>
+          <div class="method-note"><strong>Ważne:</strong> zakresy baz różnią się. Różne liczby cytowań nie są błędem. Brak czasopisma w DOAJ, DDH, COPE lub innym rejestrze nie oznacza automatycznie problemu z jego wiarygodnością. Sekcja „Open Access, koszty i transparentność” prezentuje wyłącznie sprawdzalne informacje, bez klasyfikowania czasopism jako „drapieżne” lub „niedrapieżne”.</div>
+          
+          <h3 style="margin-top:20px">Dlaczego APC i OA mogą występować kilka razy?</h3>
+          <p>Informacje o Open Access i opłatach publikacyjnych mogą pochodzić z kilku niezależnych źródeł. OpenAlex i DOAJ nie zawsze aktualizują dane w tym samym momencie, dlatego aplikacja pokazuje je osobno. Jeśli wartości APC różnią się, nie wybieramy arbitralnie jednej z nich. Użytkownik powinien potraktować je jako dane źródłowe i przed wysłaniem artykułu sprawdzić aktualny cennik wydawcy.</p>
+          <p>Podobnie status OA może być opisany z kilku perspektyw: OpenAlex ma własne pole określające, czy czasopismo jest w pełni Open Access, a DOAJ potwierdza obecność tytułu w swoim katalogu. Duży udział prac OA nie musi oznaczać, że całe czasopismo jest w pełni OA.</p>
+
+          <h3 style="margin-top:20px">Walidacja ISSN</h3>
+          <p>Gdy użytkownik wpisuje ISSN ręcznie, aplikacja sprawdza także jego cyfrę kontrolną. Walidacja dotyczy wejścia użytkownika; identyfikatory pochodzące z oficjalnych lub zewnętrznych zbiorów są zachowywane jako dane źródłowe i nie są po cichu odrzucane.</p>
+
+          <h3 style="margin-top:20px">Status Open Access czasopisma</h3>
+          <p>Dla czasopisma pokazujemy dwa niezależnie opisane źródła. DOAJ potwierdza obecność w katalogu DOAJ, natomiast OpenAlex ma własne pole <code>is_oa</code>, określające czy źródło jest obecnie w pełni Open Access. OpenAlex udostępnia też m.in. informację o obecności w DOAJ, wysokim udziale prac OA, roku przejścia na OA, liczbie prac OA i — jeśli dostępna — katalogowej cenie APC. Nie przenosimy na całe czasopismo kategorii Gold, Green, Hybrid i Bronze używanych dla pojedynczych publikacji.</p>
+          
+          <h3 style="margin-top:20px">Jak działa filtr Open Access?</h3>
+          <p><strong>Wszystkie czasopisma (OA i nie-OA)</strong> nie nakłada żadnego warunku Open Access. Pokazuje tytuły niezależnie od modelu publikowania.</p>
+          <p><strong>Fully OA — DOAJ lub OpenAlex</strong> pokazuje czasopisma, dla których pełny Open Access potwierdza co najmniej jedno z dwóch źródeł: rekord DOAJ albo pole <code>is_oa=true</code> w OpenAlex. Przy wyniku pokazujemy, które źródło było podstawą dopasowania.</p>
+          <p><strong>Tylko czasopisma w DOAJ</strong> wymaga rekordu w Directory of Open Access Journals. <strong>Fully OA wg OpenAlex</strong> wymaga <code>is_oa=true</code> w profilu źródła OpenAlex.</p>
+          <p>Nie wyliczamy statusu <strong>Diamond OA</strong> na podstawie samego pełnego OA i braku APC. To nie wystarcza do pewnej klasyfikacji. Diamond pozostaje osobnym sygnałem sprawdzanym w wyspecjalizowanym źródle, np. Diamond Discovery Hub.</p>
+
+          <h3 style="margin-top:20px">Jak działa wyszukiwanie czasopisma?</h3>
+          <p><strong>Dokładny ISSN</strong> jest jednoznacznym identyfikatorem, dlatego aplikacja od razu buduje pełny profil czasopisma. Jeśli ISSN znajduje się w wykazie MNiSW 2024, profil łączy dane ministerialne z OpenAlex, DOAJ i pozostałymi źródłami. Jeśli ISSN nie występuje w MNiSW, aplikacja nadal próbuje zbudować profil z dostępnych źródeł zewnętrznych.</p>
+          <p><strong>Tytuł lub fragment tytułu</strong> może pasować do kilku rekordów, dlatego najpierw pokazujemy listę kandydatów z przyciskiem „Pokaż profil”. Ten sam mechanizm listy stosujemy w module „Znajdź czasopismo”.</p>
+          <h3 style="margin-top:20px">Wyszukiwarka czasopism</h3>
+          <p>Tryb „Znajdź czasopismo” korzysta z <strong>dyscyplin przypisanych do czasopism</strong> i punktacji wykazu MNiSW 2024. Użytkownik wybiera zakres punktów „od–do”; wyniki nie są rankingiem „Top”, tylko listą czasopism spełniających kryteria, uporządkowaną alfabetycznie. Filtr OA może pozostawić wszystkie tytuły albo wymagać obecności w DOAJ, <code>is_oa=true</code> w OpenAlex lub co najmniej jednego z tych dwóch potwierdzeń.</p>
+          
+          <h3 style="margin-top:20px">Publikacja a czasopismo — czego dotyczą dane?</h3>
+          <p><strong>Dane publikacji</strong> obejmują m.in. DOI, status OA konkretnej pracy, cytowania, licencję, pełny tekst i topiki artykułu. <strong>Dane czasopisma</strong> obejmują m.in. ISSN, punktację i dyscypliny MNiSW, DOAJ, APC, status OA całego źródła, metryki czasopisma oraz zagregowane topiki OpenAlex.</p>
+          <p><strong>Dyscypliny MNiSW zawsze dotyczą czasopisma.</strong> Nie są automatyczną klasyfikacją tematyczną konkretnego artykułu. Podobnie topiki czasopisma w OpenAlex opisują zagregowany profil źródła i nie oznaczają, że każdy artykuł należy do każdego z tych tematów.</p>
+          <h3 style="margin-top:20px">Słowniczek — co oznaczają wskaźniki?</h3>
+          <p class="plain-note"><strong>Podpowiedzi w aplikacji:</strong> najedź na małe <strong>i</strong> albo kliknij je. Wyświetlamy tylko jedno objaśnienie naraz, żeby nie zasłaniać profilu.</p>
+          
+          <p>Nie trzeba znać bibliometrii ani zasad Open Access, żeby korzystać z aplikacji. Poniższe pojęcia są wyjaśnione w możliwie prosty sposób. Te same objaśnienia znajdziesz przy polach oznaczonych symbolem <strong>i</strong>.</p>
+          <div class="glossary-grid">
+            <div class="glossary-card"><strong>H-index</strong><p>Łączy liczbę publikacji i ich cytowalność. H-index 20 oznacza, że co najmniej 20 publikacji czasopisma ma po co najmniej 20 cytowań.</p></div>
+            <div class="glossary-card"><strong>i10-index</strong><p>Liczba publikacji, które mają co najmniej 10 cytowań. To prostszy wskaźnik niż h-index.</p></div>
+            <div class="glossary-card"><strong>2-year mean citedness</strong><p>Średnia cytowalność prac w dwuletnim oknie według OpenAlex. Nie jest to Journal Impact Factor i nie należy tych wartości utożsamiać.</p></div>
+            <div class="glossary-card"><strong>CWTS Core</strong><p>Informacja o tym, czy źródło należy do zestawu wykorzystywanego przez CWTS Leiden w analizach bibliometrycznych. To informacja o pokryciu, a nie „ocena jakości”.</p></div>
+            <div class="glossary-card"><strong>Fully Open Access</strong><p>Według źródła całe czasopismo działa obecnie w modelu Open Access. Nie oznacza to dokładnie tego samego co status OA pojedynczego artykułu.</p></div>
+            <div class="glossary-card"><strong>OA flip year</strong><p>Rok przejścia czasopisma na pełny Open Access, jeśli taka zmiana jest znana OpenAlex.</p></div>
+            <div class="glossary-card"><strong>APC</strong><p>Article Processing Charge — opłata za publikację artykułu. Brak APC oznacza, że autor nie jest obciążany taką obowiązkową opłatą.</p></div>
+            <div class="glossary-card"><strong>DOAJ</strong><p>Directory of Open Access Journals — katalog czasopism Open Access zawierający również dane o licencjach, APC, peer review i innych zasadach publikowania.</p></div>
+            <div class="glossary-card"><strong>Diamond Open Access / DDH</strong><p>Model Open Access bez obowiązkowych opłat dla autorów i czytelników. W Diamond Discovery Hub „Fully diamond” oznacza spełnienie pełnego zestawu kryteriów DDH.</p></div>
+            <div class="glossary-card"><strong>Peer review</strong><p>Proces naukowej recenzji tekstu przed publikacją. „Double anonymous” oznacza, że autorzy i recenzenci nie znają wzajemnie swojej tożsamości.</p></div>
+            <div class="glossary-card"><strong>Preservation</strong><p>Długoterminowe zabezpieczenie treści w niezależnych systemach archiwizacyjnych, żeby artykuły nie zniknęły wraz ze stroną wydawcy.</p></div>
+            <div class="glossary-card"><strong>ISSN / eISSN / ISSN-L</strong><p>ISSN identyfikuje wydanie czasopisma, np. drukowane lub elektroniczne. ISSN-L łączy różne wersje tego samego tytułu.</p></div>
+            <div class="glossary-card"><strong>COPE</strong><p>Committee on Publication Ethics. Członkostwo może być jednym z pozytywnych sygnałów dotyczących standardów etycznych, ale jego brak nie stanowi oceny czasopisma.</p></div>
+            <div class="glossary-card"><strong>Open Policy Finder</strong><p>Serwis pokazujący zasady wydawców dotyczące Open Access i samoarchiwizacji, np. czy można umieścić accepted manuscript w repozytorium.</p></div>
+            <div class="glossary-card"><strong>SCImago / SJR</strong><p>Zewnętrzny serwis z danymi opartymi na Scopus, m.in. SJR, kwartylami i h-indexem czasopisma. W POC-u przechodzimy do niego inteligentnym linkiem.</p></div>
+            <div class="glossary-card"><strong>Punkty MNiSW</strong><p>Punktacja z polskiego wykazu czasopism. Pokazujemy aktualną wartość oraz historię właściwą dla lat 2019–2026.</p></div>
+          </div>
+          <div class="plain-note"><strong>Najważniejsze:</strong> żaden pojedynczy wskaźnik nie mówi, czy czasopismo jest „dobre” albo „złe”. Aplikacja zestawia różne fakty, żeby użytkownik mógł łatwiej podjąć własną decyzję.</div>
+
+<h3 style="margin-top:20px">Identyfikacja</h3>
+          <p>Podstawą łączenia rekordów są ISSN/eISSN, ale aplikacja nie traktuje automatycznie całej tablicy <code>OpenAlex Source.issn</code> jako zestawu równorzędnych identyfikatorów badanego czasopisma. Przy publikacji preferujemy ISSN zwrócone przez Crossref i — jeśli to możliwe — potwierdzone w wykazie MNiSW. ISSN-L pokazujemy osobno. Dodatkowe identyfikatory z OpenAlex pozostają widoczne jako dane źródłowe, ale nie są używane bezkrytycznie do zewnętrznych linków i historycznej punktacji.</p>
+          <p>Przy wyszukiwaniu dokładnego ISSN wpisany identyfikator pozostaje identyfikatorem głównym profilu. Inne ISSN-y zwrócone przez OpenAlex są prezentowane oddzielnie jako dodatkowe.</p>
+          <h3 style="margin-top:20px">Linki do pełnego tekstu</h3>
+          <p>W sekcji „Dostęp do publikacji” łączymy użyteczne lokalizacje w jednym miejscu i usuwamy duplikaty. Techniczne linki Crossref przeznaczone do <code>similarity-checking</code> i <code>text-mining</code> nie są prezentowane jako linki pełnotekstowe dla użytkownika. Odrzucamy również adresy bez publicznej nazwy hosta, np. URL-e w rodzaju <code>https://cochrane/...</code>.</p>
+        </div>
+      </section>
+      <p class="footer-note">Dane pochodzą z niezależnych źródeł o różnych zakresach. Zobacz zakładkę About / źródła, aby poznać metodologię i ograniczenia POC-u.</p>
+    </main>
+
+    <div id="global-info-tooltip" class="global-info-tooltip" role="tooltip" aria-hidden="true"></div>
+
+    
+    <script defer src="./data/ministry/current.js"></script>
+    <script defer src="./data/ministry/history-points.js"></script>
+    <script defer src="./data/ministry/history-meta.js"></script>
+    <script defer src="./src/js/app.js"></script>
+
+</body>
+</html>
