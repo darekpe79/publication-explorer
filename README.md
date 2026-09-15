@@ -1,58 +1,58 @@
 # Publication Explorer
 
-Publication Explorer is a static browser application for exploring scholarly publications and journals by combining several independent scholarly-data sources. It separates information about a **specific publication** from information about the **journal as a whole** and keeps indicators attributed to their original sources.
+Publication Explorer to statyczna aplikacja przeglądarkowa do eksplorowania publikacji naukowych i czasopism z wykorzystaniem kilku niezależnych źródeł danych. Rozdziela informacje o **konkretnej publikacji** od informacji o **czasopiśmie jako całości** i zachowuje informację o pochodzeniu poszczególnych wskaźników.
 
-**Live application:** https://darekpe79.github.io/publication-explorer/
+**Aplikacja online:** https://darekpe79.github.io/publication-explorer/
 
 ## Status
 
-The application is live on GitHub Pages and is deployed from the `main` branch. The former single-file v15 proof of concept has been split into separate HTML, CSS, JavaScript and data assets, while preserving the validated v15 behaviour.
+Aplikacja działa publicznie na GitHub Pages i jest wdrażana z gałęzi `main`. Pierwotny jednoplikowy proof of concept v15 został rozdzielony na osobne pliki HTML, CSS, JavaScript oraz dane, przy zachowaniu zweryfikowanego działania wersji v15.
 
-The current release uses a reproducible Python pipeline to rebuild the Polish MNiSW journal data from official XLSX snapshots. Generated data were compared against the validated v15 checkpoint before release.
+Obecna wersja korzysta z powtarzalnego pipeline'u w Pythonie do budowania danych o czasopismach MNiSW z oficjalnych plików XLSX. Wygenerowane dane zostały porównane z zatwierdzonym checkpointem v15 przed publikacją.
 
-## What the application does
+## Co potrafi aplikacja
 
-- looks up a publication by DOI,
-- combines publication metadata from Crossref and OpenAlex,
-- shows Open Access, citation and source information for the publication,
-- looks up a journal by ISSN or title,
-- builds a journal profile using MNiSW, OpenAlex, DOAJ and ISSN-related data,
-- shows current MNiSW points and disciplines together with historical point values,
-- finds journals by MNiSW discipline and point range,
-- optionally filters finder results using DOAJ and/or OpenAlex OA signals,
-- provides links to external journal services such as Open Policy Finder, SCImago, Diamond Discovery Hub, ISSN Portal, JUFO, COPE and Index Copernicus,
-- exports publication metadata as JSON, BibTeX and RIS.
+- wyszukuje publikację po DOI,
+- łączy metadane publikacji z Crossref i OpenAlex,
+- pokazuje informacje o Open Access, cytowaniach i źródłach dotyczące konkretnej publikacji,
+- wyszukuje czasopismo po ISSN lub tytule,
+- buduje profil czasopisma z wykorzystaniem danych MNiSW, OpenAlex, DOAJ i ISSN,
+- pokazuje aktualną punktację MNiSW, dyscypliny i historię punktacji,
+- wyszukuje czasopisma po dyscyplinie MNiSW i zakresie punktów,
+- opcjonalnie filtruje wyniki według sygnałów OA z DOAJ i/lub OpenAlex,
+- udostępnia linki do zewnętrznych serwisów, takich jak Open Policy Finder, SCImago, Diamond Discovery Hub, ISSN Portal, JUFO, COPE i Index Copernicus,
+- eksportuje metadane publikacji do JSON, BibTeX i RIS.
 
-Publication Explorer intentionally does **not** calculate a single journal-quality score and does **not** classify journals as predatory/non-predatory. Signals from different services are shown separately so users can assess their meaning and provenance.
+Publication Explorer celowo **nie wylicza jednego zbiorczego wyniku jakości czasopisma** i **nie klasyfikuje czasopism jako drapieżne/niedrapieżne**. Informacje z różnych źródeł są prezentowane osobno, tak aby użytkownik mógł samodzielnie ocenić ich znaczenie i pochodzenie.
 
-## Main data sources
+## Główne źródła danych
 
-- **Crossref** — DOI metadata, references and publisher links.
-- **OpenAlex** — publication OA status, citations, topics and journal/source metadata.
-- **MNiSW** — journal points and disciplines; separate official snapshots are used for current and historical values.
-- **DOAJ** — journal OA status, APC, licence and related policy information when available.
-- **ISSN Portal** — journal identity and ISSN-related metadata.
-- **Diamond Discovery Hub** — smart journal lookup for Diamond OA verification.
-- **Open Policy Finder** — smart ISSN links to self-archiving and OA policies.
-- **SCImago** — smart ISSN links to SJR and journal metrics.
-- **Index Copernicus / ICI World of Journals** — title-based smart lookup; ISSN is displayed as an additional verification identifier.
-- **JUFO / COPE** — external verification links.
+- **Crossref** — metadane DOI, bibliografia i linki wydawcy.
+- **OpenAlex** — status OA publikacji, cytowania, topiki oraz dane o czasopiśmie/źródle.
+- **MNiSW** — punktacja i dyscypliny czasopism; oddzielne oficjalne wykazy służą do danych bieżących i historycznych.
+- **DOAJ** — status OA czasopisma, APC, licencje i informacje o politykach, jeśli są dostępne.
+- **ISSN Portal** — identyfikacja czasopisma i metadane związane z ISSN.
+- **Diamond Discovery Hub** — inteligentne wyszukiwanie czasopisma do weryfikacji Diamond OA.
+- **Open Policy Finder** — inteligentne linki po ISSN do polityk samoarchiwizacji i Open Access.
+- **SCImago** — inteligentne linki po ISSN do SJR i innych wskaźników czasopisma.
+- **Index Copernicus / ICI World of Journals** — inteligentne wyszukiwanie po tytule; ISSN jest pokazywany jako dodatkowy identyfikator do weryfikacji.
+- **JUFO / COPE** — linki do niezależnej weryfikacji klasyfikacji i standardów wydawniczych.
 
-## MNiSW data pipeline
+## Pipeline danych MNiSW
 
-The browser does not parse ministry spreadsheets directly. Official XLSX snapshots are kept locally in:
+Przeglądarka nie czyta bezpośrednio plików ministerialnych XLSX. Oficjalne pliki źródłowe są przechowywane lokalnie w:
 
 ```text
 data/ministry/raw/
 ```
 
-They are intentionally excluded from Git. The browser-ready data are generated with:
+Są celowo wyłączone z Gita. Dane gotowe do użycia przez aplikację generuje się poleceniem:
 
 ```powershell
 python .\scripts\build_ministry_data.py
 ```
 
-The build regenerates:
+Skrypt odtwarza pliki:
 
 ```text
 data/ministry/current.js
@@ -60,33 +60,33 @@ data/ministry/history-points.js
 data/ministry/history-meta.js
 ```
 
-The currently configured snapshots are 2019, 2021, 2023 and 2024. The January 2024 list is used as the current journal profile/finder base; earlier snapshots provide historical point values.
+Obecnie skonfigurowane są wykazy z lat 2019, 2021, 2023 i 2024. Wykaz ze stycznia 2024 służy jako aktualna podstawa profilu czasopisma i Findera, natomiast wcześniejsze wykazy dostarczają historycznych wartości punktowych.
 
-Compatibility with the validated v15 data can be checked with:
+Zgodność z danymi zatwierdzonej wersji v15 można sprawdzić poleceniem:
 
 ```powershell
 python .\scripts\compare_ministry_checkpoint.py
 ```
 
-More details are in [`data/ministry/README.md`](data/ministry/README.md).
+Więcej szczegółów znajduje się w [`data/ministry/README.md`](data/ministry/README.md).
 
-## Running locally
+## Uruchomienie lokalne
 
-From the repository root:
+Z katalogu głównego repozytorium:
 
 ```powershell
 python -m http.server 8000
 ```
 
-Then open:
+Następnie otwórz:
 
 ```text
 http://localhost:8000/
 ```
 
-A local HTTP server is preferred over opening `index.html` directly because browser behaviour for fetches, origins and external APIs can differ under `file://`.
+Lokalny serwer HTTP jest zalecany zamiast otwierania `index.html` bezpośrednio, ponieważ zachowanie przeglądarki dla `fetch`, origin/CORS i zewnętrznych API może różnić się przy `file://`.
 
-## Repository structure
+## Struktura repozytorium
 
 ```text
 publication-explorer/
@@ -113,11 +113,11 @@ publication-explorer/
     └── DEVELOPMENT.md
 ```
 
-The application remains intentionally static: GitHub Pages serves the files, while the browser runs the JavaScript and queries public external APIs where appropriate. Python is currently used for local/build-time data preparation and validation rather than as a server backend.
+Aplikacja pozostaje celowo statyczna: GitHub Pages serwuje pliki, a przeglądarka uruchamia JavaScript i odpytuje publiczne zewnętrzne API tam, gdzie ma to sens. Python jest obecnie używany lokalnie i na etapie przygotowania/walidacji danych, a nie jako backend serwerowy.
 
-## Development workflow
+## Workflow rozwoju
 
-`main` is the deployed version. New work should normally start from an up-to-date `main` on a dedicated branch, for example:
+`main` to wersja wdrożona publicznie. Nowe prace powinny zwykle rozpoczynać się od aktualnego `main` na osobnej gałęzi, np.:
 
 ```powershell
 git switch main
@@ -125,10 +125,10 @@ git pull
 git switch -c feat/analytics
 ```
 
-After local testing, changes can be merged back into `main`; GitHub Pages then redeploys the site automatically.
+Po testach lokalnych zmiany można scalić z powrotem do `main`; GitHub Pages automatycznie wdroży wtedy nową wersję strony.
 
-See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the local workflow.
+Więcej informacji o pracy lokalnej: [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
-## Near-term improvements
+## Najbliższe kierunki rozwoju
 
-Likely next steps include lightweight usage analytics, further source integrations and incremental UI/data-quality improvements. The current priority is to keep the public GitHub Pages version stable and reproducible rather than refactor working code solely for structural reasons.
+Najbliższe kroki to przede wszystkim lekkie statystyki użycia, kolejne integracje źródeł oraz stopniowe poprawki interfejsu i jakości danych. Priorytetem jest utrzymanie stabilnej, powtarzalnej wersji publicznej na GitHub Pages, a nie dalszy refaktor działającego kodu wyłącznie dla porządku strukturalnego.
