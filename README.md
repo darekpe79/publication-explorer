@@ -1,6 +1,6 @@
-# ScholarScope · Publication & Journal Explorer
+# Journexis · Publication & Journal Explorer
 
-ScholarScope to statyczna aplikacja przeglądarkowa do eksplorowania publikacji naukowych i czasopism z wykorzystaniem kilku niezależnych źródeł danych. Rozdziela informacje o **konkretnej publikacji** od informacji o **czasopiśmie jako całości** i zachowuje informację o pochodzeniu poszczególnych wskaźników.
+Journexis to statyczna aplikacja przeglądarkowa do eksplorowania publikacji naukowych i czasopism z wykorzystaniem kilku niezależnych źródeł danych. Rozdziela informacje o **konkretnej publikacji** od informacji o **czasopiśmie jako całości** i zachowuje informację o pochodzeniu poszczególnych wskaźników.
 
 **Autor:** Dariusz Perliński  
 **Aplikacja online:** https://darekpe79.github.io/publication-explorer/
@@ -18,7 +18,7 @@ ScholarScope to statyczna aplikacja przeglądarkowa do eksplorowania publikacji 
 - udostępnia linki do zewnętrznych serwisów, takich jak Open Policy Finder, SCImago, Diamond Discovery Hub, ISSN Portal, JUFO, COPE i Index Copernicus,
 - eksportuje metadane publikacji do JSON, BibTeX i RIS.
 
-ScholarScope celowo **nie wylicza jednego zbiorczego wyniku jakości czasopisma** i **nie klasyfikuje czasopism jako drapieżne/niedrapieżne**. Informacje z różnych źródeł są prezentowane osobno, tak aby użytkownik mógł samodzielnie ocenić ich znaczenie i pochodzenie.
+Journexis celowo **nie wylicza jednego zbiorczego wyniku jakości czasopisma** i **nie klasyfikuje czasopism jako drapieżne/niedrapieżne**. Informacje z różnych źródeł są prezentowane osobno, tak aby użytkownik mógł samodzielnie ocenić ich znaczenie i pochodzenie.
 
 ## Główne źródła danych
 
