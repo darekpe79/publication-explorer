@@ -1,7 +1,8 @@
-# Publication Explorer
+# ScholarScope · Publication & Journal Explorer
 
-Publication Explorer to statyczna aplikacja przeglądarkowa do eksplorowania publikacji naukowych i czasopism z wykorzystaniem kilku niezależnych źródeł danych. Rozdziela informacje o **konkretnej publikacji** od informacji o **czasopiśmie jako całości** i zachowuje informację o pochodzeniu poszczególnych wskaźników.
+ScholarScope to statyczna aplikacja przeglądarkowa do eksplorowania publikacji naukowych i czasopism z wykorzystaniem kilku niezależnych źródeł danych. Rozdziela informacje o **konkretnej publikacji** od informacji o **czasopiśmie jako całości** i zachowuje informację o pochodzeniu poszczególnych wskaźników.
 
+**Autor:** Dariusz Perliński  
 **Aplikacja online:** https://darekpe79.github.io/publication-explorer/
 
 ## Co potrafi aplikacja
@@ -17,7 +18,7 @@ Publication Explorer to statyczna aplikacja przeglądarkowa do eksplorowania pub
 - udostępnia linki do zewnętrznych serwisów, takich jak Open Policy Finder, SCImago, Diamond Discovery Hub, ISSN Portal, JUFO, COPE i Index Copernicus,
 - eksportuje metadane publikacji do JSON, BibTeX i RIS.
 
-Publication Explorer celowo **nie wylicza jednego zbiorczego wyniku jakości czasopisma** i **nie klasyfikuje czasopism jako drapieżne/niedrapieżne**. Informacje z różnych źródeł są prezentowane osobno, tak aby użytkownik mógł samodzielnie ocenić ich znaczenie i pochodzenie.
+ScholarScope celowo **nie wylicza jednego zbiorczego wyniku jakości czasopisma** i **nie klasyfikuje czasopism jako drapieżne/niedrapieżne**. Informacje z różnych źródeł są prezentowane osobno, tak aby użytkownik mógł samodzielnie ocenić ich znaczenie i pochodzenie.
 
 ## Główne źródła danych
 
@@ -70,6 +71,12 @@ publication-explorer/
 ```
 
 Aplikacja działa jako statyczna strona na GitHub Pages. JavaScript uruchamiany w przeglądarce odpytuje publiczne zewnętrzne API tam, gdzie ma to sens. Python służy obecnie do przygotowania i walidacji danych, a nie jako backend serwerowy.
+
+## Licencja
+
+Kod jest udostępniany na licencji **MIT**. Można go używać, modyfikować i rozpowszechniać zgodnie z warunkami licencji, z zachowaniem informacji o prawach autorskich i treści licencji.
+
+Copyright © 2026 Dariusz Perliński.
 
 ## Rozwój
 
