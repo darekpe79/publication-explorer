@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""One-time helper: add Index Copernicus smart links to Publication Explorer.
+"""One-time helper: add/fix Index Copernicus smart links in Publication Explorer.
 
 Run from repository root:
     python scripts/add_index_copernicus.py
 
-The helper is deliberately small and idempotent. It updates the current v15-derived
-app.js and the About/source description without changing other application logic.
+The Index Copernicus `search=` URL parameter fills the journal-title field, not the
+ISSN field. Therefore the smart link uses the journal title and shows ISSNs as a
+manual fallback/reference.
 """
 
 from pathlib import Path
@@ -24,21 +25,47 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 def patch_app() -> bool:
     text = APP.read_text(encoding="utf-8")
-    if "const ici=i=>" in text and "Index Copernicus" in text:
-        print("app.js: Index Copernicus already present")
-        return False
+    changed = False
 
-    old_builder = '          const sjr=i=>`https://www.scimagojr.com/journalsearch.php?q=${encodeURIComponent(i)}&tip=iss`;'
-    new_builder = old_builder + '\n          const ici=i=>`https://journals.indexcopernicus.com/search/form?search=${encodeURIComponent("ISSN "+i)}`;'
-    text = replace_once(text, old_builder, new_builder, "app.js URL builder")
+    # Migrate the first, incorrect ISSN-based prototype if it is already present locally.
+    old_builder = '          const ici=i=>`https://journals.indexcopernicus.com/search/form?search=${encodeURIComponent("ISSN "+i)}`;'
+    if old_builder in text:
+        text = text.replace(
+            old_builder,
+            '          const iciTitle=String(record?.journal||"").trim();\n'
+            '          const iciUrl=iciTitle?`https://journals.indexcopernicus.com/search/form?search=${encodeURIComponent(iciTitle)}`:"https://journals.indexcopernicus.com/search/form";',
+            1,
+        )
+        changed = True
 
-    old_row = '            <div class="external-service"><div><span class="external-name">SCImago</span><span class="external-desc">SJR, kwartyle, H-index</span></div><div class="external-links">${serviceLinks(ids,sjr)}</div></div>'
-    new_row = old_row + '\n            <div class="external-service"><div><span class="external-name">Index Copernicus</span><span class="external-desc">ICI World of Journals · inteligentne wyszukiwanie po ISSN</span></div><div class="external-links">${serviceLinks(ids,ici)}</div></div>'
-    text = replace_once(text, old_row, new_row, "app.js external source row")
+    old_row = '            <div class="external-service"><div><span class="external-name">Index Copernicus</span><span class="external-desc">ICI World of Journals · inteligentne wyszukiwanie po ISSN</span></div><div class="external-links">${serviceLinks(ids,ici)}</div></div>'
+    if old_row in text:
+        new_row = '            <div class="external-service"><div><span class="external-name">Index Copernicus</span><span class="external-desc">ICI World of Journals · wyszukiwanie po tytule czasopisma</span></div><div class="external-links"><a class="external-link generic" target="_blank" rel="noopener noreferrer" href="${escapeHtml(iciUrl)}">Otwórz ICI ↗</a><span class="external-desc">${iciTitle?`Tytuł: ${escapeHtml(iciTitle)} · `:""}ISSN do ręcznego sprawdzenia: ${escapeHtml(ids.join(" / "))}</span></div></div>'
+        text = text.replace(old_row, new_row, 1)
+        changed = True
 
-    APP.write_text(text, encoding="utf-8")
-    print("app.js: added Index Copernicus smart ISSN links")
-    return True
+    # Fresh install path: add the title-based integration if Index Copernicus is absent.
+    if "Index Copernicus</span>" not in text:
+        sjr_builder = '          const sjr=i=>`https://www.scimagojr.com/journalsearch.php?q=${encodeURIComponent(i)}&tip=iss`;'
+        text = replace_once(
+            text,
+            sjr_builder,
+            sjr_builder
+            + '\n          const iciTitle=String(record?.journal||"").trim();\n'
+            + '          const iciUrl=iciTitle?`https://journals.indexcopernicus.com/search/form?search=${encodeURIComponent(iciTitle)}`:"https://journals.indexcopernicus.com/search/form";',
+            "app.js URL builder",
+        )
+        sjr_row = '            <div class="external-service"><div><span class="external-name">SCImago</span><span class="external-desc">SJR, kwartyle, H-index</span></div><div class="external-links">${serviceLinks(ids,sjr)}</div></div>'
+        ici_row = '            <div class="external-service"><div><span class="external-name">Index Copernicus</span><span class="external-desc">ICI World of Journals · wyszukiwanie po tytule czasopisma</span></div><div class="external-links"><a class="external-link generic" target="_blank" rel="noopener noreferrer" href="${escapeHtml(iciUrl)}">Otwórz ICI ↗</a><span class="external-desc">${iciTitle?`Tytuł: ${escapeHtml(iciTitle)} · `:""}ISSN do ręcznego sprawdzenia: ${escapeHtml(ids.join(" / "))}</span></div></div>'
+        text = replace_once(text, sjr_row, sjr_row + "\n" + ici_row, "app.js external source row")
+        changed = True
+
+    if changed:
+        APP.write_text(text, encoding="utf-8")
+        print("app.js: Index Copernicus smart link uses journal title; ISSN kept as fallback")
+    else:
+        print("app.js: Index Copernicus title-based link already present")
+    return changed
 
 
 def patch_index() -> bool:
@@ -51,25 +78,27 @@ def patch_index() -> bool:
         text = replace_once(text, old_pill, new_pill, "index.html source pill")
         changed = True
 
-    if "Index Copernicus / ICI World of Journals" not in text:
-        old_row = '            <tr><td><strong>SCImago</strong></td><td>Inteligentne linki po ISSN do SJR, kwartylu i innych wskaźników czasopisma.</td></tr>'
-        new_row = old_row + '\n            <tr><td><strong>Index Copernicus / ICI World of Journals</strong></td><td>Inteligentne linki po ISSN do wyszukiwarki czasopism. Obecność rekordu w ICI World of Journals nie jest utożsamiana z indeksacją w ICI Journals Master List ani z określoną wartością ICV.</td></tr>'
-        text = replace_once(text, old_row, new_row, "index.html About row")
+    old_about = '<tr><td><strong>Index Copernicus / ICI World of Journals</strong></td><td>Inteligentne linki po ISSN do wyszukiwarki czasopism. Obecność rekordu w ICI World of Journals nie jest utożsamiana z indeksacją w ICI Journals Master List ani z określoną wartością ICV.</td></tr>'
+    new_about = '<tr><td><strong>Index Copernicus / ICI World of Journals</strong></td><td>Inteligentny link po tytule czasopisma do wyszukiwarki ICI; ISSN pokazujemy obok jako identyfikator do ręcznej weryfikacji. Obecność rekordu w ICI World of Journals nie jest utożsamiana z indeksacją w ICI Journals Master List ani z określoną wartością ICV.</td></tr>'
+    if old_about in text:
+        text = text.replace(old_about, new_about, 1)
+        changed = True
+    elif "Index Copernicus / ICI World of Journals" not in text:
+        sjr_about = '<tr><td><strong>SCImago</strong></td><td>Inteligentne linki po ISSN do SJR, kwartylu i innych wskaźników czasopisma.</td></tr>'
+        text = replace_once(text, sjr_about, sjr_about + "\n            " + new_about, "index.html About row")
         changed = True
 
     if changed:
         INDEX.write_text(text, encoding="utf-8")
-        print("index.html: documented Index Copernicus as an additional source")
+        print("index.html: documented title-based Index Copernicus link")
     else:
-        print("index.html: Index Copernicus already present")
+        print("index.html: Index Copernicus documentation already current")
     return changed
 
 
 def main() -> int:
-    changed = patch_app() or patch_index()
-    # patch_index still needs to run when app.js changed because of short-circuiting.
-    if changed:
-        patch_index()
+    patch_app()
+    patch_index()
     print("Done. Test locally before committing src/js/app.js and index.html.")
     return 0
 
