@@ -1,0 +1,1 @@
+window.MINISTRY_HISTORY_META={"2019":{"rows":30404,"issns":50026,"ambiguous":0},"2021":{"rows":32679,"issns":53224,"ambiguous":1},"2023":{"rows":34325,"issns":55927,"ambiguous":0},"2024":{"rows":34088,"issns":55583,"ambiguous":0}};
