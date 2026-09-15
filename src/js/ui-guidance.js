@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const BRAND = "ScholarScope";
+  const BRAND = "Journexis";
   const SUBTITLE = "Publication & Journal Explorer";
   const AUTHOR = "Dariusz Perliński";
 
@@ -21,9 +21,9 @@
     setMeta('meta[name="twitter:title"]', `${BRAND} · ${SUBTITLE}`);
 
     const eyebrow = document.querySelector(".eyebrow");
-    if (eyebrow && !eyebrow.dataset.scholarScopeBranded) {
+    if (eyebrow && !eyebrow.dataset.journexisBranded) {
       eyebrow.innerHTML = `<span class="eyebrow-dot"></span>${BRAND} · ${SUBTITLE}`;
-      eyebrow.dataset.scholarScopeBranded = "true";
+      eyebrow.dataset.journexisBranded = "true";
     }
 
     const lead = document.querySelector(".lead");
