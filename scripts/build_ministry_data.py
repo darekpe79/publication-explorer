@@ -41,6 +41,14 @@ def is_valid_issn_shape(value: object) -> bool:
     return bool(re.fullmatch(r"[0-9]{7}[0-9X]", normalize_issn(value)))
 
 
+def format_issn(value: object) -> str:
+    """Return the canonical display form used by v15, e.g. 1234-567X."""
+    key = normalize_issn(value)
+    if not is_valid_issn_shape(key):
+        return ""
+    return f"{key[:4]}-{key[4:]}"
+
+
 def normalize_title(value: object) -> str:
     text = unicodedata.normalize("NFKD", str(value or ""))
     text = "".join(ch for ch in text if not unicodedata.combining(ch)).lower()
@@ -158,9 +166,9 @@ def parse_snapshot(path: Path) -> dict:
             continue
         issns: list[str] = []
         for index in (3, 4, 6, 7):
-            key = normalize_issn(cell(row, index))
-            if is_valid_issn_shape(key) and key not in issns:
-                issns.append(key)
+            display = format_issn(cell(row, index))
+            if display and display not in issns:
+                issns.append(display)
         discipline_codes = [code for index, code in discipline_columns if cell(row, index).lower() == "x"]
         records.append([title1, title2, points, discipline_codes, issns])
 
@@ -179,9 +187,10 @@ def build_current(snapshot: dict, source: dict) -> dict:
     for index, record in enumerate(records):
         title1, title2, _points, _disciplines, issns = record
         for issn in issns:
+            key = normalize_issn(issn)
             # Current official list has unique ISSNs. If a future file does not,
             # keep the first and report the ambiguity instead of silently moving it.
-            issn_index.setdefault(issn, index)
+            issn_index.setdefault(key, index)
         for title in (title1, title2):
             key = normalize_title(title)
             if key and index not in title_candidates[key]:
@@ -202,21 +211,35 @@ def build_current(snapshot: dict, source: dict) -> dict:
     }
 
 
-def build_history(snapshot: dict) -> tuple[dict[str, int | float], list[dict]]:
+def build_history(snapshot: dict) -> tuple[dict[str, int | float], list[dict], set[str]]:
+    """Build unambiguous ISSN -> points map using the same rule as v15.
+
+    If the same normalized ISSN occurs with two different point values, v15 treats
+    it as ambiguous and omits that ISSN from the historical lookup entirely.
+    """
     points_by_issn: dict[str, int | float] = {}
+    ambiguous: set[str] = set()
     conflicts: list[dict] = []
+
     for row_number, record in enumerate(snapshot["records"], start=3):
         _title1, _title2, points, _disciplines, issns = record
         if points is None:
             continue
-        for issn in issns:
-            if issn in points_by_issn and points_by_issn[issn] != points:
+        for display_issn in issns:
+            issn = normalize_issn(display_issn)
+            if issn in ambiguous:
+                continue
+            if issn not in points_by_issn:
+                points_by_issn[issn] = points
+                continue
+            if points_by_issn[issn] != points:
                 conflicts.append(
                     {"issn": issn, "previous": points_by_issn[issn], "replacement": points, "row": row_number}
                 )
-            # A later duplicate in an official amendment/correction file wins.
-            points_by_issn[issn] = points
-    return points_by_issn, conflicts
+                ambiguous.add(issn)
+                del points_by_issn[issn]
+
+    return points_by_issn, conflicts, ambiguous
 
 
 def dump_js(path: Path, variable: str, value: object) -> None:
@@ -263,24 +286,29 @@ def main() -> int:
     history_points: dict[str, dict[str, int | float]] = {}
     history_meta: dict[str, dict] = {}
     for source in sources:
-        if source.get("role") != "history":
-            continue
         year = int(source["year"])
-        points_map, conflicts = build_history(parsed[year])
-        history_points[str(year)] = points_map
+        points_map, conflicts, ambiguous = build_history(parsed[year])
+        if source.get("role") == "history":
+            history_points[str(year)] = points_map
+
+        # Keep the v15-compatible fields (rows / issns / ambiguous) and add
+        # provenance fields that are harmless to the existing frontend.
         history_meta[str(year)] = {
+            "rows": len(parsed[year]["records"]),
             "issns": len(points_map),
-            "records": len(parsed[year]["records"]),
+            "ambiguous": len(ambiguous),
             "sourceFile": source["file"],
             "label": source.get("label", ""),
             "sourceUrl": source.get("sourceUrl", ""),
-            "conflictsResolvedByLastRow": len(conflicts),
         }
         if conflicts:
-            print(f"  UWAGA {year}: {len(conflicts)} konflikt(y) punktacji dla tego samego ISSN; późniejszy wiersz wygrywa.")
+            print(
+                f"  UWAGA {year}: {len(ambiguous)} niejednoznaczny(e) ISSN z różną punktacją; "
+                "pomijam je w historii, tak jak v15."
+            )
             for conflict in conflicts[:5]:
                 print(
-                    f"    {conflict['issn']}: {conflict['previous']} -> "
+                    f"    {conflict['issn']}: {conflict['previous']} <> "
                     f"{conflict['replacement']} (wiersz {conflict['row']})"
                 )
 
