@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from collections import Counter
 from pathlib import Path
 
 CHECKPOINT = "4b6f10d"
@@ -20,6 +21,7 @@ FILES = {
     "history": Path("data/ministry/history-points.js"),
     "meta": Path("data/ministry/history-meta.js"),
 }
+RECORD_FIELDS = ("title1", "title2", "points", "disciplines", "issns")
 
 
 def parse_js_assignment(text: str) -> object:
@@ -56,6 +58,43 @@ def report_mapping_diff(label: str, old: dict, new: dict, limit: int = 8) -> int
     return len(changed)
 
 
+def report_records_diff(old: list, new: list, limit: int = 8) -> int:
+    if old == new:
+        print("OK   current.records: identyczne")
+        return 0
+
+    if len(old) != len(new):
+        print(f"DIFF current.records: liczba rekordów v15={len(old)}, build={len(new)}")
+        return 1
+
+    changed_rows: list[tuple[int, list[tuple[str, object, object]]]] = []
+    field_counts: Counter[str] = Counter()
+
+    for index, (old_record, new_record) in enumerate(zip(old, new)):
+        if old_record == new_record:
+            continue
+        field_diffs: list[tuple[str, object, object]] = []
+        width = max(len(old_record), len(new_record), len(RECORD_FIELDS))
+        for pos in range(width):
+            old_value = old_record[pos] if pos < len(old_record) else None
+            new_value = new_record[pos] if pos < len(new_record) else None
+            if old_value != new_value:
+                field = RECORD_FIELDS[pos] if pos < len(RECORD_FIELDS) else f"field_{pos}"
+                field_counts[field] += 1
+                field_diffs.append((field, old_value, new_value))
+        changed_rows.append((index, field_diffs))
+
+    print(f"DIFF current.records: {len(changed_rows)} rekord(y) różnią się od checkpointu v15")
+    print("     pola: " + ", ".join(f"{field}={count}" for field, count in field_counts.items()))
+    for index, diffs in changed_rows[:limit]:
+        print(f"     rekord #{index}:")
+        for field, old_value, new_value in diffs:
+            print(f"       {field}: v15={old_value!r}  build={new_value!r}")
+    if len(changed_rows) > limit:
+        print(f"     ... i {len(changed_rows) - limit} kolejnych rekordów")
+    return 1
+
+
 def main() -> int:
     old_current = load_checkpoint(FILES["current"])
     new_current = load_working(FILES["current"])
@@ -66,7 +105,15 @@ def main() -> int:
 
     failures = 0
 
-    for key in ("disciplines", "records", "issnIndex", "titleIndex"):
+    if old_current.get("disciplines") == new_current.get("disciplines"):
+        print("OK   current.disciplines: identyczne")
+    else:
+        print("DIFF current.disciplines: różni się od checkpointu v15")
+        failures += 1
+
+    failures += report_records_diff(old_current.get("records", []), new_current.get("records", []))
+
+    for key in ("issnIndex", "titleIndex"):
         if old_current.get(key) == new_current.get(key):
             print(f"OK   current.{key}: identyczne")
         else:
