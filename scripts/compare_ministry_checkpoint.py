@@ -125,17 +125,29 @@ def main() -> int:
             f"history.{year}", old_history.get(year, {}), new_history.get(year, {})
         )
 
-    for year in ("2019", "2021", "2023"):
-        old_rows = old_meta.get(year, {}).get("rows")
-        old_issns = old_meta.get(year, {}).get("issns")
-        new_rows = new_meta.get(year, {}).get("records")
-        new_issns = new_meta.get(year, {}).get("issns")
-        if (old_rows, old_issns) == (new_rows, new_issns):
-            print(f"OK   meta.{year}: rows={new_rows}, issns={new_issns}")
+    # Compare only the v15-compatible semantic fields. The rebuilt metadata may
+    # additionally contain provenance fields such as sourceFile/label/sourceUrl.
+    for year in ("2019", "2021", "2023", "2024"):
+        old_values = (
+            old_meta.get(year, {}).get("rows"),
+            old_meta.get(year, {}).get("issns"),
+            old_meta.get(year, {}).get("ambiguous"),
+        )
+        new_values = (
+            new_meta.get(year, {}).get("rows"),
+            new_meta.get(year, {}).get("issns"),
+            new_meta.get(year, {}).get("ambiguous"),
+        )
+        if old_values == new_values:
+            print(
+                f"OK   meta.{year}: rows={new_values[0]}, "
+                f"issns={new_values[1]}, ambiguous={new_values[2]}"
+            )
         else:
             print(
-                f"DIFF meta.{year}: v15 rows/issns={old_rows}/{old_issns}, "
-                f"build={new_rows}/{new_issns}"
+                f"DIFF meta.{year}: v15 rows/issns/ambiguous="
+                f"{old_values[0]}/{old_values[1]}/{old_values[2]}, "
+                f"build={new_values[0]}/{new_values[1]}/{new_values[2]}"
             )
             failures += 1
 
