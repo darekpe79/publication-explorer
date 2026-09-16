@@ -5,6 +5,14 @@
   const GA_MEASUREMENT_ID = "G-Y5MMVEE8TC";
   const CONSENT_STORAGE_KEY = "journexis_google_analytics_consent";
 
+  function loadDeepLinks() {
+    if (document.querySelector('script[data-journexis-deep-links]')) return;
+    const script = document.createElement("script");
+    script.src = "./src/js/deep-links.js";
+    script.dataset.journexisDeepLinks = "true";
+    document.head.appendChild(script);
+  }
+
   function loadCloudflareAnalytics() {
     if (document.querySelector('script[data-cf-beacon]')) return;
 
@@ -189,6 +197,7 @@
     }
   }
 
+  loadDeepLinks();
   loadCloudflareAnalytics();
   bindProductEvents();
   initGoogleAnalytics();
