@@ -78,6 +78,23 @@
     journalForm.requestSubmit();
   }
 
+  function ensureAttribution() {
+    let footer = document.querySelector(".author-credit");
+    if (!footer) {
+      footer = document.createElement("p");
+      footer.className = "footer-note author-credit";
+      footer.innerHTML = `Journexis · Publication & Journal Explorer · © 2026 Dariusz Perliński · <a href="https://github.com/darekpe79/publication-explorer/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>`;
+      const main = document.querySelector("main.page");
+      if (main) main.appendChild(footer);
+    }
+
+    const analyticsSettings = document.querySelector(".journexis-analytics-settings");
+    if (analyticsSettings && analyticsSettings.parentElement !== footer) {
+      footer.appendChild(analyticsSettings);
+    }
+  }
+
   bindShareableJournalSearch();
   openIncomingJournalLink();
+  ensureAttribution();
 })();
