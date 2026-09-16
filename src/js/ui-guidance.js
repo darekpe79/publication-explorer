@@ -14,6 +14,15 @@
     if (element) element.setAttribute("content", value);
   }
 
+  function loadAnalytics() {
+    if (document.querySelector('script[data-journexis-analytics]')) return;
+    const script = document.createElement("script");
+    script.defer = true;
+    script.src = "./src/js/analytics.js";
+    script.dataset.journexisAnalytics = "true";
+    document.head.appendChild(script);
+  }
+
   function applyBranding() {
     document.title = `${BRAND} · ${SUBTITLE}`;
     setMeta('meta[name="description"]', `${BRAND}: eksploracja publikacji naukowych, czasopism, Open Access, bibliometrii i danych MNiSW.`);
@@ -91,6 +100,7 @@
   }
 
   function start() {
+    loadAnalytics();
     applyGuidance();
     const observer = new MutationObserver(applyGuidance);
     observer.observe(document.body, { childList: true, subtree: true });
