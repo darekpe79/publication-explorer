@@ -68,38 +68,46 @@
     const style = document.createElement("style");
     style.id = "journexis-opencitations-styles";
     style.textContent = `
-      .opencitations-panel { margin: 18px 20px 20px; padding: 18px; border: 1px solid #dbe4f0; border-radius: 16px; background: #fbfdff; }
-      .opencitations-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
-      .opencitations-head h3 { margin: 0 0 4px; }
-      .opencitations-head p { margin: 0; color: #64748b; font-size: 13px; }
-      .opencitations-source-link { white-space: nowrap; font-size: 13px; }
-      .opencitations-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-      .opencitations-stat { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
-      .opencitations-label { display: block; color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-      .opencitations-value { display: block; margin-top: 4px; font-size: 25px; font-weight: 800; color: #172033; }
-      .opencitations-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-      .opencitations-button { border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; padding: 8px 11px; color: #172033; font: inherit; cursor: pointer; }
+      .opencitations-inline {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #e2e8f0;
+      }
+      .opencitations-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .opencitations-button {
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        background: #fff;
+        padding: 8px 11px;
+        color: #172033;
+        font: inherit;
+        cursor: pointer;
+      }
       .opencitations-button:hover { border-color: #94a3b8; background: #f8fafc; }
+      .opencitations-button[aria-expanded="true"] {
+        background: #eef2ff;
+        border-color: #8b8ae8;
+        box-shadow: inset 0 0 0 1px #8b8ae8;
+      }
+      .opencitations-button:disabled { cursor: wait; opacity: .7; }
       .opencitations-list { margin-top: 12px; }
       .opencitations-list[hidden] { display: none; }
       .opencitations-list-title { margin: 0 0 8px; font-size: 14px; font-weight: 800; }
       .opencitations-list ol { margin: 0; padding-left: 22px; }
       .opencitations-list li { margin: 6px 0; overflow-wrap: anywhere; }
-      .opencitations-note { margin: 10px 0 0; color: #64748b; font-size: 12px; }
-      .opencitations-error { margin: 0; color: #b42318; font-size: 13px; }
+      .opencitations-note, .opencitations-status { margin: 9px 0 0; color: #64748b; font-size: 12px; }
+      .opencitations-error { color: #b42318; }
       .source-pill.opencitations::before { background: #6d5bd0; }
-      @media (max-width: 620px) {
-        .opencitations-panel { margin: 14px 12px 16px; padding: 14px; }
-        .opencitations-head { display: block; }
-        .opencitations-source-link { display: inline-block; margin-top: 6px; }
-        .opencitations-grid { grid-template-columns: 1fr; }
-      }
     `;
     document.head.appendChild(style);
   }
 
   function ensureSourceUi() {
-    const lang = language();
+    const en = language() === "en";
     const sources = document.querySelector(".sources-intro");
     if (sources) {
       let pill = sources.querySelector(".source-pill.opencitations");
@@ -108,40 +116,103 @@
         pill.className = "source-pill opencitations";
         sources.appendChild(pill);
       }
-      pill.textContent = lang === "en"
-        ? "OpenCitations · citations and references"
-        : "OpenCitations · cytowania i bibliografia";
+      const text = en ? "OpenCitations · citations and references" : "OpenCitations · cytowania i bibliografia";
+      if (pill.textContent !== text) pill.textContent = text;
     }
 
     const tbody = document.querySelector("#tab-about .about-table tbody");
-    if (tbody && !tbody.querySelector("tr[data-opencitations-source]")) {
-      const row = document.createElement("tr");
-      row.dataset.opencitationsSource = "true";
-      row.innerHTML = lang === "en"
+    if (tbody) {
+      let row = tbody.querySelector("tr[data-opencitations-source]");
+      if (!row) {
+        row = document.createElement("tr");
+        row.dataset.opencitationsSource = "true";
+        const openAlexRow = [...tbody.rows].find(r => r.cells?.[0]?.textContent?.trim() === "OpenAlex");
+        if (openAlexRow) openAlexRow.insertAdjacentElement("afterend", row);
+        else tbody.appendChild(row);
+      }
+      const html = en
         ? `<td><strong>OpenCitations</strong></td><td>Independent open citation data for publications: incoming citation count, reference count and DOI-level citation/reference links. Coverage may differ from Crossref and OpenAlex.</td>`
         : `<td><strong>OpenCitations</strong></td><td>Niezależne otwarte dane cytowaniowe dla publikacji: liczba cytowań przychodzących, liczba pozycji bibliografii oraz powiązania DOI dla cytowań i referencji. Pokrycie może różnić się od Crossref i OpenAlex.</td>`;
-      const openAlexRow = [...tbody.rows].find(r => r.cells?.[0]?.textContent?.trim() === "OpenAlex");
-      if (openAlexRow) openAlexRow.insertAdjacentElement("afterend", row);
-      else tbody.appendChild(row);
+      if (row.innerHTML !== html) row.innerHTML = html;
     }
   }
 
-  function renderLoading(panel) {
-    panel.innerHTML = `
-      <div class="opencitations-head">
-        <div><h3>OpenCitations</h3><p>${escapeHtml(tr("Niezależne dane o cytowaniach dla tej publikacji.", "Independent citation data for this publication."))}</p></div>
-        <a class="opencitations-source-link" href="https://opencitations.net/" target="_blank" rel="noopener noreferrer">OpenCitations ↗</a>
-      </div>
-      <p>${escapeHtml(tr("Pobieram liczbę cytowań i referencji…", "Retrieving citation and reference counts…"))}</p>`;
+  function updateBibliometricsIntro(section) {
+    const intro = section.querySelector(".bibliometrics-intro");
+    if (!intro) return;
+    const text = tr(
+      "Poniższe wskaźniki dotyczą tej konkretnej publikacji. Prosty podgląd danych dostępnych w OpenAlex, Crossref i OpenCitations. Liczby z różnych baz mogą się różnić, ponieważ każda z nich ma inny zakres indeksowania i sposób rejestrowania cytowań.",
+      "The indicators below concern this specific publication. They provide a simple view of data available from OpenAlex, Crossref and OpenCitations. Values may differ because each database has different coverage and citation-recording methods."
+    );
+    if (intro.textContent !== text) intro.textContent = text;
   }
 
-  function renderError(panel) {
-    panel.innerHTML = `
-      <div class="opencitations-head">
-        <div><h3>OpenCitations</h3><p>${escapeHtml(tr("Niezależne dane o cytowaniach dla tej publikacji.", "Independent citation data for this publication."))}</p></div>
-        <a class="opencitations-source-link" href="https://opencitations.net/" target="_blank" rel="noopener noreferrer">OpenCitations ↗</a>
-      </div>
-      <p class="opencitations-error">${escapeHtml(tr("Nie udało się pobrać danych OpenCitations. Pozostałe dane Journexis pozostają bez zmian.", "OpenCitations data could not be retrieved. The rest of the Journexis record remains unchanged."))}</p>`;
+  function metricLabel(kind) {
+    if (kind === "citations") return tr("cytowania", "citations");
+    return tr("pozycje w bibliografii", "references");
+  }
+
+  function setMetricValue(card, value) {
+    const el = card?.querySelector(".metric-value");
+    if (!el) return;
+    if (value === null || value === undefined) {
+      if (el.textContent !== "—") el.textContent = "—";
+      el.classList.add("metric-na");
+      return;
+    }
+    const shown = Number(value).toLocaleString(language() === "en" ? "en-US" : "pl-PL");
+    if (el.textContent !== shown) el.textContent = shown;
+    el.classList.remove("metric-na");
+  }
+
+  function ensureMetricCard(grid, kind) {
+    let card = grid.querySelector(`[data-opencitations-metric="${kind}"]`);
+    if (!card) {
+      card = document.createElement("div");
+      card.className = "metric-card";
+      card.dataset.opencitationsMetric = kind;
+      card.innerHTML = `<span class="metric-source">OpenCitations</span><span class="metric-value metric-na">—</span><span class="metric-label"></span>`;
+
+      const cards = [...grid.querySelectorAll(":scope > .metric-card")];
+      if (kind === "citations") {
+        const crossref = cards.find(x => x.querySelector(".metric-source")?.textContent?.trim() === "Crossref");
+        if (crossref) crossref.insertAdjacentElement("afterend", card);
+        else grid.appendChild(card);
+      } else {
+        const openAlexReference = cards.find(x => {
+          const source = x.querySelector(".metric-source")?.textContent?.trim();
+          const label = x.querySelector(".metric-label")?.textContent || "";
+          return source === "OpenAlex" && /(bibliograf|reference)/i.test(label);
+        });
+        if (openAlexReference) openAlexReference.insertAdjacentElement("afterend", card);
+        else grid.appendChild(card);
+      }
+    }
+
+    const label = card.querySelector(".metric-label");
+    const labelText = metricLabel(kind);
+    if (label && label.textContent !== labelText) label.textContent = labelText;
+    setMetricValue(card, kind === "citations" ? state.citations : state.references);
+    return card;
+  }
+
+  function buttonLabel(kind, open) {
+    if (kind === "citations") {
+      return open ? tr("Ukryj publikacje cytujące", "Hide citing publications") : tr("Pokaż publikacje cytujące", "Show citing publications");
+    }
+    return open ? tr("Ukryj bibliografię", "Hide references") : tr("Pokaż bibliografię", "Show references");
+  }
+
+  function updateButtonLabels(box) {
+    box.querySelectorAll("[data-oc-list]").forEach(button => {
+      const kind = button.dataset.ocList;
+      const target = box.querySelector(`[data-oc-target="${kind}"]`);
+      const open = Boolean(target && !target.hidden);
+      const label = buttonLabel(kind, open);
+      if (button.textContent !== label) button.textContent = label;
+      const expanded = open ? "true" : "false";
+      if (button.getAttribute("aria-expanded") !== expanded) button.setAttribute("aria-expanded", expanded);
+    });
   }
 
   function listHtml(kind, rows) {
@@ -164,19 +235,54 @@
     return `<p class="opencitations-list-title">${escapeHtml(title)}</p><ol>${items}</ol>${limitNote}`;
   }
 
-  function bindButtons(panel, doi) {
-    panel.querySelectorAll("[data-oc-list]").forEach(button => {
-      button.addEventListener("click", async () => {
+  function ensureActions(section, doi) {
+    let box = section.querySelector(".opencitations-inline");
+    if (!box) {
+      box = document.createElement("div");
+      box.className = "opencitations-inline";
+      box.innerHTML = `
+        <div class="opencitations-actions">
+          <button class="opencitations-button" type="button" data-oc-list="citations" aria-expanded="false"></button>
+          <button class="opencitations-button" type="button" data-oc-list="references" aria-expanded="false"></button>
+        </div>
+        <div class="opencitations-list" data-oc-target="citations" hidden></div>
+        <div class="opencitations-list" data-oc-target="references" hidden></div>
+        <p class="opencitations-status"></p>
+        <p class="opencitations-note"></p>`;
+      const grid = section.querySelector(".metric-grid");
+      if (grid) grid.insertAdjacentElement("afterend", box);
+    }
+
+    box.dataset.doi = doi;
+    const note = box.querySelector(".opencitations-note:last-child");
+    const noteText = tr(
+      "Źródło: OpenCitations. Pokrycie bazy jest niezależne od OpenAlex i Crossref.",
+      "Source: OpenCitations. Database coverage is independent of OpenAlex and Crossref."
+    );
+    if (note && note.textContent !== noteText) note.textContent = noteText;
+    updateButtonLabels(box);
+
+    if (box.dataset.bound !== "true") {
+      box.dataset.bound = "true";
+      box.addEventListener("click", async event => {
+        const button = event.target.closest?.("[data-oc-list]");
+        if (!button) return;
         const kind = button.dataset.ocList;
-        const target = panel.querySelector(`[data-oc-target="${kind}"]`);
+        const target = box.querySelector(`[data-oc-target="${kind}"]`);
         if (!target) return;
 
         if (!target.hidden) {
           target.hidden = true;
+          updateButtonLabels(box);
           return;
         }
 
+        box.querySelectorAll("[data-oc-target]").forEach(other => {
+          if (other !== target) other.hidden = true;
+        });
         target.hidden = false;
+        updateButtonLabels(box);
+
         const cacheKey = kind === "citations" ? "citationsRows" : "referencesRows";
         if (state[cacheKey]) {
           target.innerHTML = listHtml(kind, state[cacheKey]);
@@ -186,50 +292,39 @@
         target.innerHTML = `<p class="opencitations-note">${escapeHtml(tr("Pobieram listę…", "Retrieving list…"))}</p>`;
         button.disabled = true;
         try {
-          const rows = await fetchRows(kind, doi);
-          if (state.doi !== doi) return;
+          const rows = await fetchRows(kind, state.doi);
+          if (box.dataset.doi !== state.doi) return;
           state[cacheKey] = rows;
           target.innerHTML = listHtml(kind, rows);
         } catch (_) {
-          target.innerHTML = `<p class="opencitations-error">${escapeHtml(tr("Nie udało się pobrać tej listy.", "This list could not be retrieved."))}</p>`;
+          target.innerHTML = `<p class="opencitations-note opencitations-error">${escapeHtml(tr("Nie udało się pobrać tej listy.", "This list could not be retrieved."))}</p>`;
         } finally {
           button.disabled = false;
+          updateButtonLabels(box);
         }
       });
-    });
+    }
+
+    return box;
   }
 
-  function renderData(panel, doi, citationCount, referenceCount) {
-    panel.innerHTML = `
-      <div class="opencitations-head">
-        <div>
-          <h3>OpenCitations</h3>
-          <p>${escapeHtml(tr("Osobne źródło cytowań — wartości mogą różnić się od Crossref i OpenAlex.", "A separate citation source — values may differ from Crossref and OpenAlex."))}</p>
-        </div>
-        <a class="opencitations-source-link" href="https://api.opencitations.net/index/v2" target="_blank" rel="noopener noreferrer">API ↗</a>
-      </div>
-      <div class="opencitations-grid">
-        <div class="opencitations-stat"><span class="opencitations-label">${escapeHtml(tr("Cytowania", "Citations"))}</span><span class="opencitations-value">${escapeHtml(citationCount)}</span></div>
-        <div class="opencitations-stat"><span class="opencitations-label">${escapeHtml(tr("Referencje", "References"))}</span><span class="opencitations-value">${escapeHtml(referenceCount)}</span></div>
-      </div>
-      <div class="opencitations-actions">
-        <button class="opencitations-button" type="button" data-oc-list="citations">${escapeHtml(tr("Pokaż publikacje cytujące", "Show citing publications"))}</button>
-        <button class="opencitations-button" type="button" data-oc-list="references">${escapeHtml(tr("Pokaż bibliografię", "Show references"))}</button>
-      </div>
-      <div class="opencitations-list" data-oc-target="citations" hidden></div>
-      <div class="opencitations-list" data-oc-target="references" hidden></div>
-      <p class="opencitations-note">${escapeHtml(tr("Źródło: OpenCitations Index API v2. Pokrycie bazy jest niezależne od innych źródeł używanych w Journexis.", "Source: OpenCitations Index API v2. Database coverage is independent of the other sources used by Journexis."))}</p>`;
-    bindButtons(panel, doi);
+  function setStatus(box, text, isError = false) {
+    const status = box?.querySelector(".opencitations-status");
+    if (!status) return;
+    if (status.textContent !== text) status.textContent = text;
+    status.classList.toggle("opencitations-error", Boolean(isError));
   }
 
-  async function loadForDoi(doi, panel) {
+  async function loadForDoi(doi, section, citationCard, referenceCard, box) {
     const requestId = ++state.requestId;
     state.doi = doi;
     state.citations = null;
     state.references = null;
     state.citationsRows = null;
     state.referencesRows = null;
-    renderLoading(panel);
+    setMetricValue(citationCard, null);
+    setMetricValue(referenceCard, null);
+    setStatus(box, tr("Pobieram dane OpenCitations…", "Retrieving OpenCitations data…"));
 
     try {
       const [citations, references] = await Promise.all([
@@ -239,32 +334,43 @@
       if (requestId !== state.requestId || state.doi !== doi) return;
       state.citations = citations;
       state.references = references;
-      renderData(panel, doi, citations, references);
+      setMetricValue(citationCard, citations);
+      setMetricValue(referenceCard, references);
+      setStatus(box, "");
     } catch (_) {
       if (requestId !== state.requestId || state.doi !== doi) return;
-      renderError(panel);
+      setMetricValue(citationCard, null);
+      setMetricValue(referenceCard, null);
+      setStatus(box, tr("Nie udało się pobrać danych OpenCitations.", "OpenCitations data could not be retrieved."), true);
     }
   }
 
-  function ensurePanel() {
+  function ensureIntegration() {
     const result = document.getElementById("result");
     const input = document.getElementById("doi-input");
-    if (!result || !input || !result.children.length) return;
+    if (!result || !input) return;
+
+    result.querySelector(".opencitations-panel")?.remove();
+
+    const section = result.querySelector(".bibliometrics-section");
+    const grid = section?.querySelector(".metric-grid");
+    if (!section || !grid) return;
 
     const doi = normalizeDoi(input.value);
     if (!/^10\.\d{4,9}\/.+/i.test(doi)) return;
 
-    let panel = result.querySelector(".opencitations-panel");
-    if (!panel) {
-      panel = document.createElement("section");
-      panel.className = "opencitations-panel";
-      panel.dataset.opencitations = "true";
-      result.appendChild(panel);
-    }
+    updateBibliometricsIntro(section);
+    const citationCard = ensureMetricCard(grid, "citations");
+    const referenceCard = ensureMetricCard(grid, "references");
+    const box = ensureActions(section, doi);
 
-    if (panel.dataset.doi === doi && state.doi === doi) return;
-    panel.dataset.doi = doi;
-    loadForDoi(doi, panel);
+    if (state.doi !== doi) {
+      loadForDoi(doi, section, citationCard, referenceCard, box);
+    } else {
+      setMetricValue(citationCard, state.citations);
+      setMetricValue(referenceCard, state.references);
+      updateButtonLabels(box);
+    }
   }
 
   function resetOnSearch() {
@@ -273,9 +379,10 @@
     form.addEventListener("submit", () => {
       state.requestId++;
       state.doi = "";
+      state.citations = null;
+      state.references = null;
       state.citationsRows = null;
       state.referencesRows = null;
-      document.querySelector(".opencitations-panel")?.remove();
     });
   }
 
@@ -286,19 +393,15 @@
 
     const result = document.getElementById("result");
     if (result) {
-      const observer = new MutationObserver(() => window.setTimeout(ensurePanel, 0));
-      observer.observe(result, { childList: true, subtree: true });
-      ensurePanel();
+      const observer = new MutationObserver(() => window.setTimeout(ensureIntegration, 0));
+      observer.observe(result, { childList: true });
+      ensureIntegration();
     }
 
     document.addEventListener("journexis:languagechange", () => {
       window.setTimeout(() => {
         ensureSourceUi();
-        const panel = document.querySelector(".opencitations-panel");
-        if (panel && state.doi) {
-          if (Number.isFinite(state.citations) && Number.isFinite(state.references)) renderData(panel, state.doi, state.citations, state.references);
-          else renderLoading(panel);
-        }
+        ensureIntegration();
       }, 0);
     });
 
