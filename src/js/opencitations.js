@@ -73,6 +73,12 @@
         padding-top: 12px;
         border-top: 1px solid #e2e8f0;
       }
+      .opencitations-explainer {
+        margin: 0 0 10px;
+        color: #52627a;
+        font-size: 13px;
+        line-height: 1.5;
+      }
       .opencitations-actions {
         display: flex;
         flex-wrap: wrap;
@@ -116,7 +122,7 @@
         pill.className = "source-pill opencitations";
         sources.appendChild(pill);
       }
-      const text = en ? "OpenCitations · citations and references" : "OpenCitations · cytowania i bibliografia";
+      const text = en ? "OpenCitations · citation links" : "OpenCitations · relacje cytowaniowe";
       if (pill.textContent !== text) pill.textContent = text;
     }
 
@@ -131,8 +137,8 @@
         else tbody.appendChild(row);
       }
       const html = en
-        ? `<td><strong>OpenCitations</strong></td><td>Independent open citation data for publications: incoming citation count, reference count and DOI-level citation/reference links. Coverage may differ from Crossref and OpenAlex.</td>`
-        : `<td><strong>OpenCitations</strong></td><td>Niezależne otwarte dane cytowaniowe dla publikacji: liczba cytowań przychodzących, liczba pozycji bibliografii oraz powiązania DOI dla cytowań i referencji. Pokrycie może różnić się od Crossref i OpenAlex.</td>`;
+        ? `<td><strong>OpenCitations</strong></td><td>Citation links for a publication: works that cite it and works it cites. We show counts and DOI lists when available. Coverage may differ from OpenAlex and Crossref.</td>`
+        : `<td><strong>OpenCitations</strong></td><td>Relacje cytowaniowe publikacji: prace, które ją cytują, oraz prace przez nią cytowane. Pokazujemy liczby i — gdy są dostępne — listy DOI. Pokrycie może różnić się od OpenAlex i Crossref.</td>`;
       if (row.innerHTML !== html) row.innerHTML = html;
     }
   }
@@ -200,7 +206,7 @@
     if (kind === "citations") {
       return open ? tr("Ukryj publikacje cytujące", "Hide citing publications") : tr("Pokaż publikacje cytujące", "Show citing publications");
     }
-    return open ? tr("Ukryj bibliografię", "Hide references") : tr("Pokaż bibliografię", "Show references");
+    return open ? tr("Ukryj pozycje z bibliografii", "Hide references") : tr("Pokaż pozycje z bibliografii", "Show references");
   }
 
   function updateButtonLabels(box) {
@@ -221,8 +227,8 @@
     const unique = [...new Set(dois)];
     const shown = unique.slice(0, RESULT_LIMIT);
     const title = isCitations
-      ? tr("Publikacje cytujące — DOI", "Citing publications — DOI")
-      : tr("Bibliografia — DOI", "References — DOI");
+      ? tr("Publikacje cytujące dostępne w OpenCitations — DOI", "Citing publications available in OpenCitations — DOI")
+      : tr("Pozycje z bibliografii dostępne w OpenCitations — DOI", "References available in OpenCitations — DOI");
 
     if (!shown.length) {
       return `<p class="opencitations-note">${escapeHtml(tr("OpenCitations nie zwróciło DOI do wyświetlenia dla tej listy.", "OpenCitations returned no DOI values to display for this list."))}</p>`;
@@ -241,6 +247,7 @@
       box = document.createElement("div");
       box.className = "opencitations-inline";
       box.innerHTML = `
+        <p class="opencitations-explainer"></p>
         <div class="opencitations-actions">
           <button class="opencitations-button" type="button" data-oc-list="citations" aria-expanded="false"></button>
           <button class="opencitations-button" type="button" data-oc-list="references" aria-expanded="false"></button>
@@ -254,10 +261,17 @@
     }
 
     box.dataset.doi = doi;
+    const explainer = box.querySelector(".opencitations-explainer");
+    const explainerText = tr(
+      "OpenCitations: „Publikacje cytujące” to prace, które cytują tę publikację; „pozycje z bibliografii” to prace cytowane przez tę publikację. Listy pokazują rekordy z DOI dostępne w OpenCitations.",
+      "OpenCitations: “Citing publications” are works that cite this publication; “references” are works cited by it. The lists show records with DOI available in OpenCitations."
+    );
+    if (explainer && explainer.textContent !== explainerText) explainer.textContent = explainerText;
+
     const note = box.querySelector(".opencitations-note:last-child");
     const noteText = tr(
-      "Źródło: OpenCitations. Pokrycie bazy jest niezależne od OpenAlex i Crossref.",
-      "Source: OpenCitations. Database coverage is independent of OpenAlex and Crossref."
+      "Pokrycie OpenCitations może różnić się od OpenAlex i Crossref, dlatego liczby nie muszą być takie same.",
+      "OpenCitations coverage may differ from OpenAlex and Crossref, so the counts do not have to match."
     );
     if (note && note.textContent !== noteText) note.textContent = noteText;
     updateButtonLabels(box);
