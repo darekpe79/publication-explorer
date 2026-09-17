@@ -9,6 +9,14 @@
     document.head.appendChild(script);
   }
 
+  function loadOpenCitationsControls() {
+    if (document.querySelector('script[data-journexis-opencitations-controls]')) return;
+    const script = document.createElement("script");
+    script.src = "./src/js/opencitations-controls.js";
+    script.dataset.journexisOpencitationsControls = "true";
+    document.head.appendChild(script);
+  }
+
   function setActiveTab(name) {
     document.querySelectorAll("[data-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.tab === name);
@@ -103,6 +111,7 @@
   }
 
   loadOpenCitations();
+  loadOpenCitationsControls();
   bindShareableJournalSearch();
   openIncomingJournalLink();
   ensureAttribution();
