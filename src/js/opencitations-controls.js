@@ -39,14 +39,22 @@
       const kind = button.dataset.ocList;
       const target = panel.querySelector(`[data-oc-target="${kind}"]`);
       const open = Boolean(target && !target.hidden);
-      button.setAttribute("aria-expanded", open ? "true" : "false");
-      button.textContent = labels(kind, open);
+      const expanded = open ? "true" : "false";
+      const label = labels(kind, open);
+      if (button.getAttribute("aria-expanded") !== expanded) {
+        button.setAttribute("aria-expanded", expanded);
+      }
+      if (button.textContent !== label) {
+        button.textContent = label;
+      }
     });
   }
 
   function closeOtherList(panel, keepKind) {
     panel.querySelectorAll("[data-oc-target]").forEach(target => {
-      if (target.dataset.ocTarget !== keepKind) target.hidden = true;
+      if (target.dataset.ocTarget !== keepKind && !target.hidden) {
+        target.hidden = true;
+      }
     });
   }
 
@@ -73,10 +81,20 @@
   function init() {
     ensureStyles();
     document.querySelectorAll(".opencitations-panel").forEach(syncPanel);
-    const observer = new MutationObserver(() => {
-      document.querySelectorAll(".opencitations-panel").forEach(syncPanel);
+
+    const result = document.getElementById("result");
+    if (!result) return;
+
+    const observer = new MutationObserver(mutations => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (!(node instanceof Element)) continue;
+          if (node.matches?.(".opencitations-panel")) syncPanel(node);
+          node.querySelectorAll?.(".opencitations-panel").forEach(syncPanel);
+        }
+      }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(result, { childList: true, subtree: true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
