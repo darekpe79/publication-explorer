@@ -1,6 +1,22 @@
 (() => {
   "use strict";
 
+  function loadOpenCitations() {
+    if (document.querySelector('script[data-journexis-opencitations]')) return;
+    const script = document.createElement("script");
+    script.src = "./src/js/opencitations.js";
+    script.dataset.journexisOpencitations = "true";
+    document.head.appendChild(script);
+  }
+
+  function loadOpenCitationsTrend() {
+    if (document.querySelector('script[data-journexis-opencitations-trend]')) return;
+    const script = document.createElement("script");
+    script.src = "./src/js/opencitations-trend.js";
+    script.dataset.journexisOpencitationsTrend = "true";
+    document.head.appendChild(script);
+  }
+
   function setActiveTab(name) {
     document.querySelectorAll("[data-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.tab === name);
@@ -94,6 +110,8 @@
     }
   }
 
+  loadOpenCitations();
+  loadOpenCitationsTrend();
   bindShareableJournalSearch();
   openIncomingJournalLink();
   ensureAttribution();
