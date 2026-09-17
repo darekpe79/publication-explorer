@@ -17,6 +17,14 @@
     document.head.appendChild(script);
   }
 
+  function loadOpenCitationsListExpander() {
+    if (document.querySelector('script[data-journexis-opencitations-list-expander]')) return;
+    const script = document.createElement("script");
+    script.src = "./src/js/opencitations-list-expander.js";
+    script.dataset.journexisOpencitationsListExpander = "true";
+    document.head.appendChild(script);
+  }
+
   function setActiveTab(name) {
     document.querySelectorAll("[data-tab]").forEach(button => {
       button.classList.toggle("active", button.dataset.tab === name);
@@ -112,6 +120,7 @@
 
   loadOpenCitations();
   loadOpenCitationsTrend();
+  loadOpenCitationsListExpander();
   bindShareableJournalSearch();
   openIncomingJournalLink();
   ensureAttribution();
