@@ -44,7 +44,10 @@
   }
 
   function cleanAgentName(value) {
-    return String(value || "").replace(/\s*\[[^\]]*\]\s*$/, "").trim();
+    return String(value || "")
+      .replace(/\s*\[[^\]]*\]\s*$/, "")
+      .replace(/,\s*\d{4}(?:-\d{4}){2}-[\dX]{3,4}\s*$/i, "")
+      .trim();
   }
 
   function authorText(value) {
@@ -64,7 +67,7 @@
   }
 
   function metadataDoi(row) {
-    return extractDoi(row?.id || "");
+    return normalizeDoi(row?.doi) || extractDoi(row?.id || "");
   }
 
   function addStyles() {
@@ -178,16 +181,23 @@
   async function fetchMetadata(dois) {
     const unique = [...new Set((dois || []).map(normalizeDoi).filter(Boolean))];
     const missing = unique.filter(doi => !metaCache.has(doi.toLowerCase()));
+
     for (let start = 0; start < missing.length; start += META_BATCH_SIZE) {
       const batch = missing.slice(start, start + META_BATCH_SIZE);
-      const ids = batch.map(doi => `doi:${encodeURIComponent(doi)}`).join("__");
+      const ids = batch.map(doi => encodeURIComponent(doi)).join("__");
+
       try {
-        const response = await fetch(`${META_API_BASE}/metadata/${ids}`, {
+        // Use the Index metadata endpoint here. These DOI records come from the
+        // Index citation/reference lists, and this endpoint resolves their
+        // bibliographic metadata (title, author, year) via OpenCitations Meta.
+        const response = await fetch(`${INDEX_API_BASE}/metadata/${ids}`, {
           headers: { Accept: "application/json" }
         });
-        if (!response.ok) throw new Error(`OpenCitations Meta HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`OpenCitations metadata HTTP ${response.status}`);
+
         const rows = await response.json();
         const seen = new Set();
+
         for (const row of Array.isArray(rows) ? rows : []) {
           const doi = metadataDoi(row);
           if (!doi) continue;
@@ -195,15 +205,28 @@
           metaCache.set(key, row);
           seen.add(key);
         }
+
         batch.forEach(doi => {
           const key = doi.toLowerCase();
           if (!seen.has(key)) metaCache.set(key, null);
         });
       } catch (_) {
-        batch.forEach(doi => {
+        // Fall back to one-by-one Meta API lookups. A single unusual DOI in a
+        // batch should not prevent metadata from being shown for the others.
+        for (const doi of batch) {
           const key = doi.toLowerCase();
-          if (!metaCache.has(key)) metaCache.set(key, null);
-        });
+          try {
+            const response = await fetch(
+              `${META_API_BASE}/metadata/doi:${encodeURIComponent(doi)}`,
+              { headers: { Accept: "application/json" } }
+            );
+            if (!response.ok) throw new Error(`OpenCitations Meta HTTP ${response.status}`);
+            const rows = await response.json();
+            metaCache.set(key, Array.isArray(rows) && rows.length ? rows[0] : null);
+          } catch (_) {
+            metaCache.set(key, null);
+          }
+        }
       }
     }
   }
@@ -224,7 +247,7 @@
 
     const title = String(meta.title || "").trim();
     const authors = authorText(meta.author);
-    const year = publicationYear(meta.pub_date);
+    const year = publicationYear(meta.year || meta.pub_date);
     const byline = [authors, year].filter(Boolean).join(" · ");
 
     const fragments = [];
@@ -236,6 +259,16 @@
 
   async function enrichList(list) {
     if (!list || list.hidden) return;
+
+    const kind = kindForList(list);
+    const heading = list.querySelector(".opencitations-list-title");
+    if (heading) {
+      const headingText = kind === "citations"
+        ? tr("Publikacje cytujące dostępne w OpenCitations", "Citing publications available in OpenCitations")
+        : tr("Pozycje z bibliografii dostępne w OpenCitations", "References available in OpenCitations");
+      if (heading.textContent !== headingText) heading.textContent = headingText;
+    }
+
     const items = [...list.querySelectorAll("ol > li")]
       .filter(li => li.dataset.ocMetaEnhanced !== "true");
     if (!items.length) return;
