@@ -100,6 +100,15 @@
         color: #64748b;
         font-size: 12px;
       }
+      .oc-meta-enrich-status {
+        margin: 6px 0 8px;
+        color: #64748b;
+        font-size: 12px;
+      }
+      .opencitations-list.oc-meta-enriching ol {
+        opacity: .38;
+        transition: opacity .18s ease;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -257,6 +266,27 @@
     li.innerHTML = fragments.join("");
   }
 
+  function showMetadataLoading(list) {
+    if (!list) return;
+    list.classList.add("oc-meta-enriching");
+    let status = list.querySelector("[data-oc-meta-status]");
+    if (!status) {
+      status = document.createElement("p");
+      status.className = "oc-meta-enrich-status";
+      status.dataset.ocMetaStatus = "true";
+      const heading = list.querySelector(".opencitations-list-title");
+      if (heading) heading.insertAdjacentElement("afterend", status);
+      else list.prepend(status);
+    }
+    status.textContent = tr("Pobieram tytuły i autorów…", "Loading titles and authors…");
+  }
+
+  function hideMetadataLoading(list) {
+    if (!list) return;
+    list.classList.remove("oc-meta-enriching");
+    list.querySelector("[data-oc-meta-status]")?.remove();
+  }
+
   async function enrichList(list) {
     if (!list || list.hidden) return;
 
@@ -270,7 +300,7 @@
     }
 
     const items = [...list.querySelectorAll("ol > li")]
-      .filter(li => li.dataset.ocMetaEnhanced !== "true");
+      .filter(li => li.dataset.ocMetaEnhanced !== "true" && li.dataset.ocMetaPending !== "true");
     if (!items.length) return;
 
     const pairs = items
@@ -282,13 +312,21 @@
       li.dataset.ocMetaPending = "true";
     });
 
-    await fetchMetadata(pairs.map(item => item.doi));
+    showMetadataLoading(list);
+    try {
+      await fetchMetadata(pairs.map(item => item.doi));
 
-    pairs.forEach(({ li, doi }) => {
-      if (!document.contains(li)) return;
-      delete li.dataset.ocMetaPending;
-      renderMetadata(li, doi, metaCache.get(doi.toLowerCase()) || null);
-    });
+      pairs.forEach(({ li, doi }) => {
+        if (!document.contains(li)) return;
+        delete li.dataset.ocMetaPending;
+        renderMetadata(li, doi, metaCache.get(doi.toLowerCase()) || null);
+      });
+    } finally {
+      pairs.forEach(({ li }) => {
+        if (document.contains(li)) delete li.dataset.ocMetaPending;
+      });
+      hideMetadataLoading(list);
+    }
   }
 
   function scan() {
