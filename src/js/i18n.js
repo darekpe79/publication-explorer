@@ -29,6 +29,8 @@
     ["Dyscyplina czasopisma · MNiSW 2024", "Journal discipline · MNiSW 2024"],
     ["Punkty od", "Points from"],
     ["Punkty do", "Points to"],
+    ["Kraj czasopisma · OpenAlex", "Journal country · OpenAlex"],
+    ["Wszystkie kraje", "All countries"],
     ["Wszystkie czasopisma (OA i nie-OA)", "All journals (OA and non-OA)"],
     ["Tylko czasopisma w DOAJ", "Journals in DOAJ only"],
     ["Fully OA wg OpenAlex", "Fully OA according to OpenAlex"],

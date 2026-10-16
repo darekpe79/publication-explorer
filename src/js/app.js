@@ -89,7 +89,7 @@
 
         const appTabs=[...document.querySelectorAll("[data-tab]")],tabPanels=[...document.querySelectorAll("[data-tab-panel]")];
         const journalSearchForm=document.getElementById("journal-search-form"),journalQuery=document.getElementById("journal-query"),journalSearchResults=document.getElementById("journal-search-results"),journalResult=document.getElementById("journal-result"),journalMessage=document.getElementById("journal-message"),journalLoading=document.getElementById("journal-loading");
-        const finderForm=document.getElementById("finder-form"),disciplineSelect=document.getElementById("discipline-select"),pointsFrom=document.getElementById("points-from"),pointsTo=document.getElementById("points-to"),oaFilter=document.getElementById("oa-filter"),finderResults=document.getElementById("finder-results"),finderJournalResult=document.getElementById("finder-journal-result"),finderMessage=document.getElementById("finder-message");
+        const finderForm=document.getElementById("finder-form"),disciplineSelect=document.getElementById("discipline-select"),pointsFrom=document.getElementById("points-from"),pointsTo=document.getElementById("points-to"),oaFilter=document.getElementById("oa-filter"),countryFilter=document.getElementById("country-filter"),finderResults=document.getElementById("finder-results"),finderJournalResult=document.getElementById("finder-journal-result"),finderMessage=document.getElementById("finder-message");
         let activeJournalTarget=journalResult;
         const EXAMPLE_DOI="10.1002/14651858.CD010438";
         const statusLabels={gold:"Gold OA",green:"Green OA",hybrid:"Hybrid OA",bronze:"Bronze OA",diamond:"Diamond OA",closed:"brak potwierdzonego OA"};
@@ -152,7 +152,8 @@
             if(evidence.openAlex)labels.push("OpenAlex OA");
             if(labels.length)oaBadge=`<span class="oa-evidence-badge">Fully OA: ${escapeHtml(labels.join(" + "))}</span>`
           }
-          return `<div class="journal-result-item"><div><div class="journal-result-title">${escapeHtml(title)}</div><div class="journal-result-meta"><span>${escapeHtml(points)} pkt</span><span>${escapeHtml(issns.join(" · ")||"brak ISSN")}</span><span>${escapeHtml((raw?.[3]||[]).length)} dyscyplin</span>${oaBadge}</div></div><button class="journal-open" type="button" data-open-journal="${index}" title="Otwórz pełny profil czasopisma">Pokaż profil</button></div>`
+          const countryBadge=evidence?.country?`<span>${escapeHtml(countryName(evidence.country))} · OpenAlex</span>`:"";
+          return `<div class="journal-result-item"><div><div class="journal-result-title">${escapeHtml(title)}</div><div class="journal-result-meta"><span>${escapeHtml(points)} pkt</span><span>${escapeHtml(issns.join(" · ")||"brak ISSN")}</span><span>${escapeHtml((raw?.[3]||[]).length)} dyscyplin</span>${countryBadge}${oaBadge}</div></div><button class="journal-open" type="button" data-open-journal="${index}" title="Otwórz pełny profil czasopisma">Pokaż profil</button></div>`
         }
 
         function bindJournalRows(container,target){
@@ -164,6 +165,24 @@
           disciplineSelect.innerHTML=entries.map(([code,name])=>`<option value="${escapeHtml(code)}">${escapeHtml(name)}</option>`).join("")
         }
         populateDisciplines();
+
+        const FINDER_COUNTRY_CODES="AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split(" ");
+        function finderLanguage(){return window.JournexisI18n?.getLanguage?.()||"pl"}
+        function finderTr(pl,en){return finderLanguage()==="en"?en:pl}
+        function countryName(code){
+          try{return new Intl.DisplayNames([finderLanguage()],{type:"region"}).of(code)||code}catch(_){return code}
+        }
+        function populateCountries(){
+          if(!countryFilter)return;
+          const selected=countryFilter.value||"any";
+          const rows=FINDER_COUNTRY_CODES.map(code=>({code,name:countryName(code)}))
+            .sort((a,b)=>a.name.localeCompare(b.name,finderLanguage(),{sensitivity:"base"}));
+          countryFilter.innerHTML='<option value="any">'+finderTr("Wszystkie kraje","All countries")+'</option>'+
+            rows.map(({code,name})=>'<option value="'+code+'">'+escapeHtml(name)+'</option>').join("");
+          countryFilter.value=selected;
+        }
+        populateCountries();
+        document.addEventListener("journexis:languagechange",populateCountries);
 
         function journalsForDisciplineRange(code,minPts=20,maxPts=200,limit=100){
           const rows=[];
@@ -179,46 +198,38 @@
         }
 
 
-        async function oaJournalsForDisciplineRange(code,minPts=20,maxPts=200,mode="oa_any",limit=20,scanLimit=60){
+        async function filteredJournalsForDisciplineRange(code,minPts,maxPts,mode,country,limit=20,scanLimit=60){
           const all=journalsForDisciplineRange(code,minPts,maxPts,Number.MAX_SAFE_INTEGER).rows;
-          const candidates=all.slice(0,scanLimit);
-          const accepted=[];
-          const batchSize=5;
+          const candidates=all.slice(0,scanLimit),accepted=[];
           let unverified=0;
-
-          for(let start=0;start<candidates.length&&accepted.length<limit;start+=batchSize){
-            const batch=candidates.slice(start,start+batchSize);
+          const needsOpenAlex=country!=="any"||mode==="openalex"||mode==="oa_any";
+          for(let start=0;start<candidates.length&&accepted.length<limit;start+=5){
+            const batch=candidates.slice(start,start+5);
             const checks=await Promise.all(batch.map(async index=>{
-              const raw=MINISTRY_DATA.records[index];
-              const issns=(raw?.[4]||[]).map(formatIssn).filter(Boolean);
-              let doajValue=null,doajError=false,openAlexValue=null,openAlexError=false;
-
-              if(mode==="doaj"||mode==="oa_any"){
+              const raw=MINISTRY_DATA.records[index],issns=(raw?.[4]||[]).map(formatIssn).filter(Boolean);
+              let doajValue=null,openAlexResult=null,unknown=false;
+              if(needsOpenAlex)openAlexResult=await checkOpenAlexOaByIssns(issns);
+              const source=openAlexResult?.source||null;
+              if((mode==="doaj"||mode==="oa_any")){
                 const doaj=await fetchDoajByIssns(issns);
                 doajValue=doaj?.found===true?true:(doaj?.error?null:false);
-                doajError=Boolean(doaj?.error)
               }
-              if(mode==="openalex"||mode==="oa_any"){
-                const oaCheck=await checkOpenAlexOaByIssns(issns);
-                openAlexValue=oaCheck.value;
-                openAlexError=Boolean(oaCheck.error)
+              let countryPassed=true;
+              if(country!=="any"){
+                countryPassed=String(source?.country_code||"").toUpperCase()===country;
+                if(!source?.country_code)unknown=true;
               }
-
-              let passed=false,unknown=false;
-              if(mode==="doaj"){passed=doajValue===true;unknown=doajValue===null}
-              else if(mode==="openalex"){passed=openAlexValue===true;unknown=openAlexValue===null}
-              else{passed=doajValue===true||openAlexValue===true;unknown=!passed&&(doajValue===null||openAlexValue===null)}
-
-              return{hit:passed?{index,evidence:{doaj:doajValue===true,openAlex:openAlexValue===true}}:null,unknown,errors:{doaj:doajError,openAlex:openAlexError}}
+              let oaPassed=true;
+              if(mode==="doaj"){oaPassed=doajValue===true;if(doajValue===null)unknown=true}
+              else if(mode==="openalex"){oaPassed=source?.is_oa===true;if(openAlexResult?.error)unknown=true}
+              else if(mode==="oa_any"){oaPassed=doajValue===true||source?.is_oa===true;if(!oaPassed&&(doajValue===null||openAlexResult?.error))unknown=true}
+              if(country!=="any"&&openAlexResult?.error)unknown=true;
+              return{hit:countryPassed&&oaPassed?{index,evidence:{doaj:doajValue===true,openAlex:source?.is_oa===true,country:source?.country_code||""}}:null,unknown};
             }));
-            for(const check of checks){
-              if(check.unknown)unverified++;
-              if(check.hit&&accepted.length<limit)accepted.push(check.hit)
-            }
+            checks.forEach(check=>{if(check.unknown)unverified++;if(check.hit&&accepted.length<limit)accepted.push(check.hit)});
           }
           return{rows:accepted,scanned:candidates.length,candidateCount:all.length,unverified}
         }
-
 
         function journalIssns(record){
           const vals=[
@@ -678,27 +689,28 @@
 
           const rangeLabel=minPts===maxPts?`${minPts} pkt`:`${minPts}–${maxPts} pkt`;
 
-          if(oaMode!=="any"){
-            const modeLabel=oaMode==="oa_any"?"Fully OA — DOAJ lub OpenAlex":oaMode==="doaj"?"Tylko czasopisma w DOAJ":"Fully OA wg OpenAlex";
-            if(button){button.disabled=true;button.textContent="Sprawdzam OA…"}
-            setInlineMessage(finderMessage,`${name} · ${rangeLabel}: sprawdzam filtr „${modeLabel}”…`);
-
+          const country=countryFilter?.value||"any";
+          if(oaMode!=="any"||country!=="any"){
+            const modeLabel=oaMode==="oa_any"?"Fully OA — DOAJ lub OpenAlex":oaMode==="doaj"?"Tylko czasopisma w DOAJ":oaMode==="openalex"?"Fully OA wg OpenAlex":"";
+            const countryLabel=country==="any"?"":countryName(country);
+            const label=[modeLabel,countryLabel].filter(Boolean).join(" · ");
+            if(button){button.disabled=true;button.textContent=finderTr("Sprawdzam…","Checking…")}
+            setInlineMessage(finderMessage,finderTr(`${name} · ${rangeLabel}: sprawdzam ${label}…`,`${name} · ${rangeLabel}: checking ${label}…`));
             try{
-              const base=journalsForDisciplineRange(code,minPts,maxPts,Number.MAX_SAFE_INTEGER);
-              const res=await oaJournalsForDisciplineRange(code,minPts,maxPts,oaMode,20,60);
+              const res=await filteredJournalsForDisciplineRange(code,minPts,maxPts,oaMode,country,20,60);
               finderResults.innerHTML=res.rows.map(hit=>journalResultRow(hit.index,hit.evidence)).join("");
               bindJournalRows(finderResults,finderJournalResult);
-
-              const degraded=res.unverified?` Nie udało się jednoznacznie zweryfikować statusu OA dla ${res.unverified} ${res.unverified===1?"czasopisma":"czasopism"} z powodu chwilowego braku odpowiedzi któregoś API; nie są one liczone jako „nie-OA”.`:"";
-              const scanNote=base.total>60?` Ze względu na liczbę zapytań OA sprawdzono pierwsze 60 z ${base.total.toLocaleString("pl-PL")} czasopism w tym zakresie, w kolejności alfabetycznej.`:` Sprawdzono wszystkie ${base.total.toLocaleString("pl-PL")} czasopisma z tego zakresu.`;
-
-              if(res.rows.length)setInlineMessage(finderMessage,`${name} · ${rangeLabel}: znaleziono ${res.rows.length} czasopism spełniających filtr „${modeLabel}”.${scanNote}${degraded}`);
-              else setInlineMessage(finderMessage,`${name} · ${rangeLabel}: w sprawdzonej części listy nie znaleziono czasopism spełniających filtr „${modeLabel}”.${scanNote}${degraded}`)
+              const scanNote=res.candidateCount>res.scanned
+                ?finderTr(` Sprawdzono pierwsze ${res.scanned} z ${res.candidateCount.toLocaleString("pl-PL")} tytułów (alfabetycznie).`,` Checked the first ${res.scanned} of ${res.candidateCount.toLocaleString("en-US")} titles (alphabetically).`)
+                :finderTr(` Sprawdzono ${res.scanned} tytułów.`,` Checked ${res.scanned} titles.`);
+              const unknownNote=res.unverified?finderTr(` Nie udało się zweryfikować ${res.unverified} rekordów (brak odpowiedzi API lub kraju w OpenAlex); nie uznano ich za niepasujące.`,` ${res.unverified} records could not be verified (API error or missing OpenAlex country); they were not counted as negative matches.`):"";
+              const summary=res.rows.length
+                ?finderTr(`Znaleziono ${res.rows.length} czasopism spełniających warunki: ${label}.`,`Found ${res.rows.length} matching journals: ${label}.`)
+                :finderTr(`Brak potwierdzonych wyników dla: ${label} (w sprawdzonej części listy).`,`No confirmed matches for: ${label} (within the checked part of the list).`);
+              setInlineMessage(finderMessage,`${name} · ${rangeLabel}: ${summary}${scanNote}${unknownNote}`);
             }catch(error){
-              setInlineMessage(finderMessage,error?.message||"Nie udało się zakończyć sprawdzania statusu OA. Spróbuj ponownie za chwilę.",true)
-            }finally{
-              if(button){button.disabled=false;button.textContent="Pokaż"}
-            }
+              setInlineMessage(finderMessage,error?.message||finderTr("Nie udało się sprawdzić filtrów. Spróbuj ponownie.","The filters could not be checked. Please retry."),true)
+            }finally{if(button){button.disabled=false;button.textContent=finderTr("Pokaż","Show")}}
             return
           }
 
