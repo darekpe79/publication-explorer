@@ -217,7 +217,7 @@
               let countryPassed=true;
               if(country!=="any"){
                 countryPassed=String(source?.country_code||"").toUpperCase()===country;
-                if(!source?.country_code && (openAlexResult?.error||source))unknown=true;
+                if(!source?.country_code)unknown=true;
               }
               let oaPassed=true;
               if(mode==="doaj"){oaPassed=doajValue===true;if(doajValue===null)unknown=true}
