@@ -75,6 +75,7 @@
             <div class="field-stack"><label for="discipline-select">Dyscyplina czasopisma · MNiSW 2024</label><select id="discipline-select"></select></div>
             <div class="field-stack"><label for="points-from">Punkty od</label><select id="points-from"><option>20</option><option>40</option><option>70</option><option>100</option><option>140</option><option>200</option></select></div>
             <div class="field-stack"><label for="points-to">Punkty do</label><select id="points-to"><option>20</option><option>40</option><option>70</option><option>100</option><option>140</option><option selected>200</option></select></div>
+            <div class="field-stack"><label for="country-filter">Kraj czasopisma · OpenAlex</label><select id="country-filter"><option value="any">Wszystkie kraje</option></select></div>
             <div class="field-stack"><label for="oa-filter">Open Access</label><select id="oa-filter">
               <option value="any">Wszystkie czasopisma (OA i nie-OA)</option>
               <option value="oa_any">Fully OA — DOAJ lub OpenAlex</option>
@@ -83,7 +84,7 @@
             </select></div>
             <button class="search-button" type="submit">Pokaż</button>
           </div>
-          <div class="search-help"><span>Wybierz dyscyplinę i zakres punktów MNiSW. Wyniki nie są rankingiem „Top” — czasopisma spełniające kryteria są prezentowane alfabetycznie. Przy filtrze OA aplikacja sprawdza na żywo DOAJ i/lub OpenAlex; ze względu na liczbę zapytań sprawdzanych jest maksymalnie 60 pierwszych alfabetycznie czasopism z wybranego zakresu.</span></div>
+          <div class="search-help"><span>Wybierz dyscyplinę i zakres punktów MNiSW. Wyniki nie są rankingiem „Top” — czasopisma spełniające kryteria są prezentowane alfabetycznie. Przy filtrze kraju i/lub OA aplikacja sprawdza na żywo maksymalnie 60 pierwszych alfabetycznie czasopism z wybranego zakresu. Kraj pochodzi z OpenAlex; brak danych nie oznacza, że czasopismo nie jest wydawane w wybranym kraju.</span></div>
         </form>
         <div class="message" id="finder-message"></div>
         <div class="journal-list" id="finder-results"></div>
