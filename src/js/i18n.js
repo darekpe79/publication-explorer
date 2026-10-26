@@ -399,6 +399,8 @@
     if (!node.nodeValue || !node.nodeValue.trim()) return;
     const parent = node.parentElement;
     if (!parent || parent.closest("script,style,code,pre")) return;
+    // Keep genuine bibliographic titles, author names and dynamic source data unchanged.
+    if (parent.closest(".result-title,.authors,.journal-result-title,.journal-profile-head h2,.related-name,.location-title:not(:has(.access-kind)),.oc-meta-title,.oc-meta-byline")) return;
 
     const current = node.nodeValue;
     const stored = originalText.get(node);
@@ -515,10 +517,16 @@
     addSwitcher();
     translateSubtree(document.body);
     const observer = new MutationObserver(mutations => {
+      const additions = [];
       for (const mutation of mutations) {
-        if (mutation.type === "characterData") translateTextNode(mutation.target);
-        for (const node of mutation.addedNodes) translateSubtree(node);
+        if (mutation.type === "characterData") {
+          if (language === "en") translateTextNode(mutation.target);
+        } else {
+          for (const node of mutation.addedNodes) additions.push(node);
+        }
       }
+      // Translate only newly rendered content. Do not repeatedly walk the whole page.
+      if (language === "en") for (const node of additions) translateSubtree(node);
     });
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
