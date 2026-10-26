@@ -501,7 +501,7 @@ async function filteredJournalsForDisciplineRange(state,pageSize=20,onProgress=(
             ${fact("ISSN czasopisma",record?.verifiedIssnText||"brak informacji")}
             ${fact("ISSN-L",record?.issnLText||"brak informacji")}
           </section>
-          ${extra.length?`<div class="issn-extra-note"><strong>Dodatkowe identyfikatory zwrócone przez OpenAlex:</strong> ${escapeHtml(extra.join(", "))}. Pokazujemy je dla transparentności, ale nie traktujemy automatycznie jako równorzędnych ISSN badanego czasopisma.</div>`:""}`
+          ${extra.length?`<div class="issn-extra-note"><strong>Dodatkowe identyfikatory zwrócone przez OpenAlex:</strong> <span data-journexis-source>${escapeHtml(extra.join(", "))}</span>. <span>Pokazujemy je dla transparentności, ale nie traktujemy automatycznie jako równorzędnych ISSN badanego czasopisma.</span></div>`:""}`
         }
 
         function journalOaStatus(record){
@@ -1681,7 +1681,7 @@ function installFinderHandlers(){
             <p class="history-intro"><strong>Historia dotyczy czasopisma, nie pojedynczego artykułu.</strong> Punktacja jest wbudowana na podstawie oficjalnych wykazów 2019, 2021 i 2023. Dopasowanie odbywa się po ISSN/e-ISSN. Aktualne dyscypliny i ranking Top 5 pozostają wyłącznie z wykazu 05.01.2024.</p>
             <div class="history-trend">${trend}</div>
             <table class="history-table"><thead><tr><th>Rok publikacji</th><th>Punkty</th><th>Właściwy wykaz</th></tr></thead><tbody>${html}</tbody></table>
-            <div class="history-note"><strong>Źródła wbudowane w POC:</strong> ${escapeHtml(meta)}. Jeśli różne ISSN tego samego bieżącego rekordu prowadzą w dawnym wykazie do różnych wartości punktowych, aplikacja pokazuje „niejednoznaczne dane” wraz z wartościami źródłowymi — nie wybiera jednej arbitralnie.</div>
+            <div class="history-note"><strong>Źródła wbudowane w POC:</strong> <span data-journexis-source>${escapeHtml(meta)}</span>. <span>Jeśli różne ISSN tego samego bieżącego rekordu prowadzą w dawnym wykazie do różnych wartości punktowych, aplikacja pokazuje „niejednoznaczne dane” wraz z wartościami źródłowymi — nie wybiera jednej arbitralnie.</span></div>
           </section>`
         }
 
@@ -1689,18 +1689,18 @@ function installFinderHandlers(){
         function ministryPanel(record){
           const m=record.ministry;
           if(!m){
-            const issnText=record.issnCandidates?.length?` Sprawdzone identyfikatory czasopisma: ${record.issnCandidates.join(", ")}.`:" Nie udało się uzyskać identyfikatorów ISSN czasopisma.";
+            const issnText=record.issnCandidates?.length?` <span>Sprawdzone identyfikatory czasopisma:</span> <span data-journexis-source>${escapeHtml(record.issnCandidates.join(", "))}</span>.`:" <span>Nie udało się uzyskać identyfikatorów ISSN czasopisma.</span>";
             return `<section class="ministry-section">
               <h3>MNiSW 2024 · punktacja i dyscypliny czasopisma</h3>
               <p class="ministry-intro"><strong>Ta sekcja dotyczy czasopisma jako całości, nie konkretnego artykułu.</strong> Dyscypliny MNiSW nie są automatyczną klasyfikacją tematyczną publikacji.</p>
-              <div class="ministry-empty"><strong>Brak dopasowania czasopisma w aktualnym wykazie.</strong>${escapeHtml(issnText)} Sprawdzono również dokładne dopasowanie tytułu.</div>
+              <div class="ministry-empty"><strong>Brak dopasowania czasopisma w aktualnym wykazie.</strong>${issnText} <span>Sprawdzono również dokładne dopasowanie tytułu.</span></div>
             </section>`
           }
           const titles=[m.title1,m.title2].filter(Boolean).filter((v,i,a)=>a.findIndex(x=>x.toLowerCase()===v.toLowerCase())===i);
           const disciplineChips=m.disciplines.length?m.disciplines.map(d=>`<button class="discipline-chip" type="button" title="Pokaż inne najwyżej punktowane czasopisma w tej dyscyplinie" data-ministry-discipline="${escapeHtml(d.code)}" data-ministry-discipline-name="${escapeHtml(d.name)}">${escapeHtml(d.name)}</button>`).join(""):`<span class="related-empty">Brak przypisanych dyscyplin.</span>`;
           const matchText=m.matchedBy==="title"
-            ?"Nie znaleziono jednoznacznego wspólnego ISSN; zastosowano dokładne dopasowanie tytułu czasopisma."
-            :`Dopasowano czasopismo na podstawie identyfikatorów ISSN${m.matchedIssns.length?`: ${m.matchedIssns.join(", ")}`:""}${m.matchedBy==="issn+title"?" i potwierdzono tytułem":""}.`;
+            ?"<span>Nie znaleziono jednoznacznego wspólnego ISSN; zastosowano dokładne dopasowanie tytułu czasopisma.</span>"
+            :`<span>Dopasowano czasopismo na podstawie identyfikatorów ISSN</span>${m.matchedIssns.length?`: <span data-journexis-source>${escapeHtml(m.matchedIssns.join(", "))}</span>`:""}${m.matchedBy==="issn+title"?" <span>i potwierdzono tytułem</span>":""}.`;
           return `<section class="ministry-section">
             <h3>MNiSW 2024 · punktacja i dyscypliny czasopisma</h3>
             <p class="ministry-intro"><strong>Dane dotyczą czasopisma.</strong> Przypisanie do dyscyplin nie oznacza, że każdy artykuł w czasopiśmie należy do tych dyscyplin.</p>
@@ -1722,7 +1722,7 @@ function installFinderHandlers(){
               </div>
               <div class="ministry-related-list" id="ministry-related-list"></div>
             </div>
-            <div class="ministry-match">${escapeHtml(matchText)} Źródło: ${escapeHtml(MINISTRY_DATA.sourceFile)}.</div>
+            <div class="ministry-match">${matchText} <span>Źródło:</span> <span data-journexis-source>${escapeHtml(MINISTRY_DATA.sourceFile)}</span>.</div>
           </section>`
         }
 
@@ -1862,7 +1862,7 @@ function installFinderHandlers(){
             ${fact("ISSN w wykazie MNiSW 2024",record.ministryIssnText)}
             ${fact("Źródło wartości głównej ISSN",record.issnSourceText)}
           </section>
-          ${record.extraOpenAlexIssns?.length?`<div class="issn-extra-note"><strong>Jak czytać dodatkowe ISSN z OpenAlex?</strong> OpenAlex może zwrócić więcej identyfikatorów powiązanych ze swoim rekordem Source. Pokazujemy je dla transparentności, ale nie uznajemy automatycznie za równorzędne ISSN badanego czasopisma. Główne ISSN ustalamy konserwatywnie z Crossref i/lub wykazu MNiSW, a ISSN-L pokazujemy osobno.</div>`:""}
+          ${record.extraOpenAlexIssns?.length?`<div class="issn-extra-note"><strong>Jak czytać dodatkowe ISSN z OpenAlex?</strong> <span>OpenAlex może zwrócić więcej identyfikatorów powiązanych ze swoim rekordem Source.</span> <span>Pokazujemy je dla transparentności, ale nie uznajemy automatycznie za równorzędne ISSN badanego czasopisma.</span> <span>Główne ISSN ustalamy konserwatywnie z Crossref i/lub wykazu MNiSW, a ISSN-L pokazujemy osobno.</span></div>`:""}
           <section class="source-status" aria-label="Źródła danych o czasopiśmie">
             <div class="status-box"><strong>OpenAlex Source ${record.openAlexSource?"✓":"—"}</strong><span>${record.openAlexSource?"profil i metryki całego czasopisma":"brak jednoznacznego profilu czasopisma"}</span></div>
             <div class="status-box"><strong>Wykaz MNiSW 2024 ${record.ministry?"✓":"—"}</strong><span>${record.ministry?`${record.ministry.points} pkt · ${record.ministry.disciplines.length} dyscyplin czasopisma`:"brak dopasowania czasopisma w aktualnym wykazie"}</span></div>
