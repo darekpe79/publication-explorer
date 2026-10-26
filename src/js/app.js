@@ -173,6 +173,18 @@
         function countryName(code){
           try{return new Intl.DisplayNames([finderLanguage()],{type:"region"}).of(code)||code}catch(_){return code}
         }
+        function fullCountryLabel(code){
+          const normalized=String(code||"").trim().toUpperCase();
+          if(!normalized)return "—";
+          const name=countryName(normalized);
+          return name&&name!==normalized?`${normalized} (${name})`:normalized;
+        }
+        function refreshJournalCountryLabels(){
+          document.querySelectorAll("[data-journexis-country-code]").forEach(element=>{
+            const label=fullCountryLabel(element.dataset.journexisCountryCode);
+            if(element.textContent!==label)element.textContent=label;
+          });
+        }
         function populateCountries(){
           if(!countryFilter)return;
           const selected=countryFilter.value||"any";
@@ -183,7 +195,10 @@
           countryFilter.value=selected;
         }
         populateCountries();
-        document.addEventListener("journexis:languagechange",populateCountries);
+        document.addEventListener("journexis:languagechange",()=>{
+          populateCountries();
+          refreshJournalCountryLabels();
+        });
 
         function journalsForDisciplineRange(code,minPts=20,maxPts=200,limit=100){
           const rows=[];
@@ -434,7 +449,7 @@ async function filteredJournalsForDisciplineRange(state,pageSize=20,onProgress=(
             :[];
 
           const publisher=source?.host_organization_name||source?.host_organization?.display_name||"";
-          const country=source?.country_code||"";
+          const country=String(source?.country_code||"").trim().toUpperCase();
           const firstYear=source?.first_publication_year??null;
           const lastYear=source?.last_publication_year??null;
           const flipYear=source?.oa_flip_year??null;
@@ -472,7 +487,7 @@ async function filteredJournalsForDisciplineRange(state,pageSize=20,onProgress=(
               <div class="journal-metric-grid">
                 <div class="journal-metric"><span class="journal-metric-label">CWTS Core ${infoTip("Informacja OpenAlex o tym, czy źródło należy do zestawu CWTS Core używanego przez CWTS Leiden do analiz bibliometrycznych. Traktuj to jako informację o pokryciu, nie ocenę jakości.")}</span><span class="journal-metric-value">${escapeHtml(coreState)}</span></div>
                 <div class="journal-metric"><span class="journal-metric-label">Wydawca</span><span class="journal-metric-value journal-metric-small">${escapeHtml(publisher||"—")}</span></div>
-                <div class="journal-metric"><span class="journal-metric-label">Kraj</span><span class="journal-metric-value">${escapeHtml(country||"—")}</span></div>
+                <div class="journal-metric"><span class="journal-metric-label">Kraj</span><span class="journal-metric-value"${country?` data-journexis-country-code="${escapeHtml(country)}"`:""}>${escapeHtml(fullCountryLabel(country))}</span></div>
                 <div class="journal-metric"><span class="journal-metric-label">Zakres lat w OpenAlex ${infoTip("Najwcześniejszy i najpóźniejszy rok publikacji widoczny dla tego źródła w OpenAlex. Nie musi odpowiadać pełnej historii czasopisma.")}</span><span class="journal-metric-value">${firstYear!=null||lastYear!=null?escapeHtml(`${firstYear??"?"}–${lastYear??"?"}`):"—"}</span></div>
               </div>
             </div>
