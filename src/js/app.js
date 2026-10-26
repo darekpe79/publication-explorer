@@ -152,7 +152,7 @@
             if(evidence.openAlex)labels.push("OpenAlex OA");
             if(labels.length)oaBadge=`<span class="oa-evidence-badge">Fully OA: ${escapeHtml(labels.join(" + "))}</span>`
           }
-          const countryBadge=evidence?.country?`<span>${escapeHtml(countryName(evidence.country))} · OpenAlex</span>`:"";
+          const countryBadge=evidence?.country?`<span data-journexis-country-code="${escapeHtml(evidence.country)}">${escapeHtml(fullCountryLabel(evidence.country))}</span> · OpenAlex`:"";
           const disciplineBadge=evidence?.discipline?`<span>${escapeHtml(evidence.discipline)} · MNiSW</span>`:"";
           return `<div class="journal-result-item"><div><div class="journal-result-title">${escapeHtml(title)}</div><div class="journal-result-meta"><span>${escapeHtml(points)} pkt</span><span>${escapeHtml(issns.join(" · ")||"brak ISSN")}</span><span>${escapeHtml((raw?.[3]||[]).length)} dyscyplin</span>${disciplineBadge}${countryBadge}${oaBadge}</div></div><button class="journal-open" type="button" data-open-journal="${index}" title="Otwórz pełny profil czasopisma">Pokaż profil</button></div>`
         }
@@ -179,8 +179,8 @@
           const name=countryName(normalized);
           return name&&name!==normalized?`${normalized} (${name})`:normalized;
         }
-        function refreshJournalCountryLabels(){
-          document.querySelectorAll("[data-journexis-country-code]").forEach(element=>{
+        function refreshJournalCountryLabels(root=document){
+          root.querySelectorAll("[data-journexis-country-code]").forEach(element=>{
             const label=fullCountryLabel(element.dataset.journexisCountryCode);
             if(element.textContent!==label)element.textContent=label;
           });
@@ -648,6 +648,7 @@ async function filteredJournalsForDisciplineRange(state,pageSize=20,onProgress=(
             ${issnRegistryPanel(record)}
             ${transparencySignalsPanel(record)}
             ${externalChecksPanel(record)}`;
+          refreshJournalCountryLabels(target);
           target.querySelectorAll("[data-ministry-discipline]").forEach(button=>button.addEventListener("click",()=>{
             target.querySelectorAll("[data-ministry-discipline]").forEach(b=>b.classList.toggle("active",b===button));
             const list=target.querySelector("#ministry-related-list"),head=target.querySelector("#ministry-related-title"),box=target.querySelector("#ministry-related");
@@ -681,6 +682,7 @@ async function filteredJournalsForDisciplineRange(state,pageSize=20,onProgress=(
             ${issnRegistryPanel(record)}
             ${transparencySignalsPanel(record)}
             ${externalChecksPanel(record)}`;
+          refreshJournalCountryLabels(target);
           bindTopicExplorers(target,record.sourceOpenAlexId);
           enrichIssnRegistry(record,target)
         }
@@ -1871,6 +1873,7 @@ function installFinderHandlers(){
           ${externalChecksPanel(record)}`;
 
           result.classList.add("visible");
+          refreshJournalCountryLabels(result);
           result.querySelectorAll("[data-external-link]").forEach(link=>link.addEventListener("click",()=>showMessage("Otwieram wskazaną stronę w nowej karcie. Jeśli pojawi się PDF, możesz zapisać go z poziomu przeglądarki.")));
           bindMetadataExport(record);
           bindTopicExplorers(result,record.sourceOpenAlexId);
