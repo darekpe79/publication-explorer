@@ -159,6 +159,9 @@
       .field-stack label{font-size:12px;font-weight:850;color:#5d6880}
       .field-stack select,.field-stack input{width:100%;min-height:45px;border:1px solid #d7ddea;border-radius:12px;padding:10px 12px;background:#fff;color:#182036;font:inherit}
       .journal-list{display:grid;gap:10px;margin-top:14px}
+      .finder-more{display:flex;justify-content:center;margin:18px 0 8px}
+      .finder-more:empty{display:none}
+      .finder-more .journal-open{padding:12px 22px;font-size:14px}
       .journal-result-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 15px;border:1px solid #dfe4ee;border-radius:15px;background:#fff}
       .journal-result-title{font-weight:900;font-size:15px}
       .journal-result-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:5px;color:#69758c;font-size:12px}
