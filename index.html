@@ -13,7 +13,7 @@
     <meta name="twitter:description" content="Sprawdź publikację lub czasopismo: metadane, bibliometria, Open Access, MNiSW, DOAJ i inne źródła." />
     <meta name="twitter:image" content="og.png" />
     <title>Publication Explorer · Crossref, OpenAlex, MNiSW, DOAJ</title>
-    <link rel="stylesheet" href="./assets/css/app.css" />
+    <link rel="stylesheet" href="./assets/css/app.css?v=20261026-resume-1" />
 </head>
   <body>
     <main class="page">
@@ -84,10 +84,11 @@
             </select></div>
             <button class="search-button" type="submit">Pokaż</button>
           </div>
-          <div class="search-help"><span>Wybierz dyscyplinę i zakres punktów MNiSW. Wyniki nie są rankingiem „Top” — czasopisma spełniające kryteria są prezentowane alfabetycznie. Przy filtrze kraju i/lub OA aplikacja sprawdza na żywo maksymalnie 60 pierwszych alfabetycznie czasopism z wybranego zakresu. Kraj pochodzi z OpenAlex; brak danych nie oznacza, że czasopismo nie jest wydawane w wybranym kraju.</span></div>
+          <div class="search-help"><span>Wybierz dyscyplinę, zakres punktów, kraj i opcjonalny filtr OA. Przy wybranym kraju lub OA aplikacja znajduje do 20 dopasowań naraz; możesz szukać kolejnych aż do końca wykazu. Kraj pochodzi z OpenAlex.</span></div>
         </form>
-        <div class="message" id="finder-message"></div>
+        <div class="message" id="finder-message" role="status" aria-live="polite"></div>
         <div class="journal-list" id="finder-results"></div>
+        <div id="finder-more" class="finder-more"></div>
         <article class="result-card" id="finder-journal-result"></article>
       </section>
 
@@ -174,8 +175,8 @@
     <script defer src="./data/ministry/current.js"></script>
     <script defer src="./data/ministry/history-points.js"></script>
     <script defer src="./data/ministry/history-meta.js"></script>
-    <script defer src="./src/js/app.js?v=20261016-country-filter-2"></script>
-    <script defer src="./src/js/ui-guidance.js?v=20261016-country-filter-1"></script>
+    <script defer src="./src/js/app.js?v=20261026-resume-1"></script>
+    <script defer src="./src/js/ui-guidance.js?v=20261026-resume-1"></script>
 
 </body>
 </html>
