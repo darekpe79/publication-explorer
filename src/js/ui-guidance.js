@@ -44,7 +44,7 @@
           <p>A <strong>title or title fragment</strong> may match several records, so we first show a list of candidates with a “Show profile” button. The same list mechanism is used in the “Find a journal” module.</p>
 
           <h3 style="margin-top:20px">Journal finder</h3>
-          <p>The “Find a journal” mode uses <strong>disciplines assigned to journals</strong> and points from the MNiSW 2024 list. The user selects a points range; results are not a “Top” ranking but an alphabetical list of journals that meet the selected criteria. The OA filter can keep all titles, require DOAJ presence, require <code>is_oa=true</code> in OpenAlex, or accept confirmation from at least one of those two sources. The optional country filter uses <code>country_code</code> from OpenAlex; when either filter is selected, no more than the first 60 alphabetically listed MNiSW candidates are checked.</p>
+          <p>The “Find a journal” mode uses <strong>disciplines assigned to journals</strong> and points from the MNiSW 2024 list. The user selects a points range; results are not a “Top” ranking but an alphabetical list of journals that meet the selected criteria. The OA filter can keep all titles, require DOAJ presence, require <code>is_oa=true</code> in OpenAlex, or accept confirmation from at least one of those two sources. The optional country filter uses <code>country_code</code> from OpenAlex; with country and/or OA filtering, the app searches up to 20 matches at a time and can continue checking subsequent MNiSW candidates without restarting.</p>
 
           <h3 style="margin-top:20px">Publication vs journal — what do the data describe?</h3>
           <p><strong>Publication data</strong> include, among other things, DOI, the OA status of the individual work, citations, licence, full text and article topics. <strong>Journal data</strong> include, among other things, ISSN, MNiSW points and disciplines, DOAJ, APC, source-level OA status, journal metrics and aggregated OpenAlex topics.</p>
@@ -218,8 +218,8 @@
     setTextIfNeeded(
       document.querySelector("#finder-form .search-help span"),
       tr(
-        "Wybierz dyscyplinę, zakres punktów, kraj (wg OpenAlex) i opcjonalny filtr Open Access. Wyniki są alfabetyczne. Gdy wybierzesz kraj i/lub OA, aplikacja sprawdzi na żywo maksymalnie 60 pierwszych tytułów z zakresu; brak kraju w OpenAlex nie oznacza innego kraju wydania.",
-        "Choose a discipline, points range, OpenAlex journal country and an optional Open Access filter. Results are alphabetical, not ranked. With country and/or OA filtering, up to the first 60 titles in the range are checked live. Missing OpenAlex country data does not imply another country. MNiSW disciplines retain their Polish names."
+        "Wybierz dyscyplinę, zakres punktów, kraj (wg OpenAlex) i opcjonalnie Open Access. Wyniki są alfabetyczne. Przy filtrze kraju i/lub OA aplikacja znajduje do 20 dopasowań naraz; możesz kontynuować aż do końca wykazu. Brak kraju w OpenAlex nie oznacza innego kraju wydania.",
+        "Choose a discipline, points range, OpenAlex journal country and optional Open Access filter. Results are alphabetical. With country and/or OA filtering, up to 20 matches are shown per search; you can continue to the end of the list. Missing OpenAlex country data does not imply another country. MNiSW disciplines retain their Polish names."
       )
     );
 
