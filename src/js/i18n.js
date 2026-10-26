@@ -323,6 +323,17 @@
     ["punktów", "points"],
   ]) EXACT.set(pl, en);
 
+  for (const [pl,en] of [
+    ["OA publikacji, cytowania, topiki publikacji i otwarte lokalizacje", "Publication OA, citations, topics and open-access locations"],
+    ["nie znaleziono rekordu publikacji lub źródło było niedostępne", "Publication record not found or source unavailable"],
+    ["metadane bibliograficzne publikacji i linki zdeponowane przez wydawcę", "Publication bibliographic metadata and publisher-deposited links"],
+    ["nie znaleziono rekordu Crossref", "Crossref record not found"],
+    ["Publikacja", "Publication"],
+    ["Strona publikacji u wydawcy", "Publication page on publisher website"],
+    ["t. ", "vol. "],
+    ["nr ", "no. "],
+  ]) EXACT.set(pl,en);
+
   const REGEX = [
     [/^(\d+) pkt$/, "$1 pts"],
     [/^(\d+) dyscyplin$/, "$1 disciplines"],
