@@ -1212,11 +1212,30 @@ function installFinderHandlers(){
         function topicPath(topic){if(!topic)return"";return[topic.domain,topic.field,topic.subfield].filter(Boolean).join(" → ")}
         function uniqueTopics(items){const seen=new Set();return(items||[]).map(normalizeTopic).filter(Boolean).filter(topic=>{if(!topic.id||seen.has(topic.id))return false;seen.add(topic.id);return true})}
 
+        function bibliographicValue(...values){
+          for(const value of values){
+            if(value===null||value===undefined)continue;
+            const text=String(value).trim();
+            if(text)return text;
+          }
+          return "";
+        }
+        function sameWorkOpenAlexBiblio(doi,openAlex){
+          const expected=normalizeDoi(doi).toLowerCase();
+          const matched=normalizeDoi(openAlex?.doi||"").toLowerCase();
+          return expected&&matched===expected?(openAlex?.biblio||{}):{};
+        }
         function buildRecord(doi,openAlex,crossref,openAlexSource){
           const crTitle=plainText(first(crossref?.title)),oaTitle=plainText(openAlex?.display_name||openAlex?.title),crAuthors=crossrefAuthors(crossref),authors=crAuthors.length?crAuthors:openAlexAuthors(openAlex),openAccess=Boolean(openAlex?.open_access?.is_oa),oaStatus=openAlex?.open_access?.oa_status||(openAccess?"open":"closed"),oa=oaLocations(openAlex),cr=crossrefLocations(crossref),bestOa=oa[0]||null,publisherUrl=safePublicWebUrl(crossref?.resource?.primary?.URL||crossref?.URL);
           const journal=plainText(first(crossref?.["container-title"]))||openAlexSource?.display_name||openAlex?.primary_location?.source?.display_name||"brak informacji";
           const issnData=collectIssnData(crossref,openAlexSource,openAlex);
           const ministry=ministryLookup(issnData,journal);
+          const oaBiblio=sameWorkOpenAlexBiblio(doi,openAlex);
+          const volume=bibliographicValue(crossref?.volume,crossref?.["journal-issue"]?.volume,oaBiblio.volume);
+          const issue=bibliographicValue(crossref?.issue,crossref?.["journal-issue"]?.issue,oaBiblio.issue);
+          const pages=bibliographicValue(crossref?.page,crossref?.["article-number"],
+            oaBiblio.first_page&&oaBiblio.last_page&&oaBiblio.first_page!==oaBiblio.last_page
+              ?`${oaBiblio.first_page}–${oaBiblio.last_page}` : oaBiblio.first_page);
 
           const officialIssns=ministry?.officialIssns||[];
           const issnL=issnData.issnL||"";
@@ -1251,8 +1270,9 @@ function installFinderHandlers(){
             journal,
             publisher:plainText(crossref?.publisher)||openAlexSource?.host_organization_name||"brak informacji",
             type:crossref?.type||openAlex?.type||"",
-            volumeIssue:[crossref?.volume&&`t. ${crossref.volume}`,crossref?.issue&&`nr ${crossref.issue}`].filter(Boolean).join(", ")||"brak informacji",
-            pages:crossref?.page||crossref?.["article-number"]||"brak informacji",
+            volume,issue,
+            volumeIssue:[volume&&`t. ${volume}`,issue&&`nr ${issue}`].filter(Boolean).join(", ")||"brak informacji",
+            pages:pages||"brak informacji",
             issnCandidates:issnData.candidates,
             crossrefIssns:issnData.crossrefIssns,
             openAlexIssns:issnData.openAlexIssns,
@@ -1824,7 +1844,7 @@ function installFinderHandlers(){
         function renderRecord(record){
           window.__publicationExplorerCurrentRecord=record;
           const accessItems=publicationAccessItems(record);
-          const badges=`<span class="badge ${record.openAccess?"oa":"closed"}">● Publikacja · ${escapeHtml(record.oaStatusLabel)}</span>${record.hasCrossref?`<span class="badge crossref">Crossref ✓</span>`:""}<span class="badge type">${escapeHtml(formatType(record.type))}</span>`;
+          const badges=`<span class="badge ${record.openAccess?"oa":"closed"}">● <span>Publikacja</span> · ${escapeHtml(record.oaStatusLabel)}</span>${record.hasCrossref?`<span class="badge crossref">Crossref ✓</span>`:""}<span class="badge type">${escapeHtml(formatType(record.type))}</span>`;
           const locationsHtml=accessItems.length?accessItems.map(locationRow).join(""):`<div class="location"><div><span class="location-title">Brak bezpośredniego dostępu pełnotekstowego w pobranych danych</span><span class="location-meta">Możesz nadal użyć strony DOI w sekcji rekordów źródłowych.</span></div></div>`;
 
           result.innerHTML=`<header class="result-head"><div class="badges">${badges}</div><h2 class="result-title">${escapeHtml(record.title)}</h2><p class="authors">${escapeHtml(record.authors.join(", ")||"Brak informacji o autorach")}</p></header>
