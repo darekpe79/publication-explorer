@@ -213,6 +213,33 @@
     ["Brak topiców", "No topics"],
   ]) EXACT.set(pl, en);
 
+  // Tooltip translations, including the data-info attribute.
+  for (const [pl, en] of [
+    ["Oficjalny międzynarodowy rejestr ISSN. Służy przede wszystkim do potwierdzania tożsamości czasopisma i jego identyfikatorów.", "The official international ISSN register. It is mainly used to verify a journal's identity and identifiers."],
+    ["Czy całe czasopismo jest obecnie w pełni Open Access według OpenAlex. To status czasopisma, nie pojedynczego artykułu.", "Whether the entire journal is currently fully Open Access according to OpenAlex. This is a journal-level status, not that of an individual article."],
+    ["OpenAlex przechowuje informację, czy czasopismo znajduje się w Directory of Open Access Journals (DOAJ).", "OpenAlex records whether a journal is listed in the Directory of Open Access Journals (DOAJ)."],
+    ["OpenAlex oznacza źródła, w których duża część publikacji jest dostępna Open Access. Nie oznacza to automatycznie, że wszystkie artykuły są otwarte.", "OpenAlex identifies sources with a high proportion of Open Access publications. This does not mean that all articles are open."],
+    ["Liczba publikacji przypisanych do czasopisma, które OpenAlex rozpoznaje jako dostępne Open Access.", "The number of works assigned to this journal that OpenAlex identifies as Open Access."],
+    ["Rok, w którym czasopismo miało przejść z modelu zamkniętego lub mieszanego na pełny Open Access, jeśli OpenAlex zna taką informację.", "The year when the journal may have switched from closed or mixed access to fully Open Access, if recorded by OpenAlex."],
+    ["Article Processing Charge: opłata, której wydawca może wymagać od autora lub instytucji za publikację artykułu. Pokazujemy ją tylko, jeśli źródło udostępnia taką informację.", "Article Processing Charge: a fee a publisher may charge an author or institution for publishing an article. It is shown only when the source provides this information."],
+    ["Liczba prac przypisanych przez OpenAlex do tego czasopisma. Może różnić się od danych wydawcy lub innych baz.", "Number of works attributed to the journal by OpenAlex. This may differ from publisher data or other databases."],
+    ["Łączna liczba cytowań prac z tego czasopisma zarejestrowanych przez OpenAlex. Zakres bazy wpływa na wynik.", "Total citations of the journal's works recorded in OpenAlex. Database coverage affects the count."],
+    ["Czasopismo ma h-index równy h, jeśli co najmniej h jego publikacji otrzymało co najmniej h cytowań. Łączy liczbę publikacji i ich cytowalność.", "A journal has an h-index of h when at least h of its works have each received h citations. The metric combines productivity and citations."],
+    ["Liczba publikacji czasopisma, które otrzymały co najmniej 10 cytowań w danych OpenAlex.", "Number of journal publications that have received at least 10 citations in OpenAlex."],
+    ["Średnia liczba cytowań przypadająca na publikacje z ostatniego dwuletniego okna według OpenAlex. To nie jest Journal Impact Factor (JIF).", "Average citations per publication in OpenAlex's latest two-year window. This is not Journal Impact Factor (JIF)."],
+    ["Informacja OpenAlex o tym, czy źródło należy do zestawu CWTS Core używanego przez CWTS Leiden do analiz bibliometrycznych. Traktuj to jako informację o pokryciu, nie ocenę jakości.", "OpenAlex reports whether the source is part of the CWTS Core set used by CWTS Leiden in bibliometric studies. It is a coverage indicator, not a quality assessment."],
+    ["Najwcześniejszy i najpóźniejszy rok publikacji widoczny dla tego źródła w OpenAlex. Nie musi odpowiadać pełnej historii czasopisma.", "Earliest and latest publication years visible for this source in OpenAlex. These may not reflect the journal's complete history."],
+    ["Czy całe czasopismo jest obecnie w pełni Open Access. Pokazujemy głównie informację OpenAlex i obecność w DOAJ.", "Whether the whole journal is currently fully Open Access. We mainly present OpenAlex data and DOAJ presence."],
+    ["Jaki odsetek publikacji przypisanych do czasopisma OpenAlex rozpoznaje jako dostępne Open Access. To nie oznacza automatycznie, że całe czasopismo jest fully OA.", "The percentage of the journal's publications identified by OpenAlex as Open Access. This does not necessarily mean the entire journal is fully OA."],
+    ["Katalogowa opłata za publikację artykułu, jeśli OpenAlex ma taką informację. To może nie być ostateczna cena dla konkretnego autora.", "Listed fee for publishing an article, if reported by OpenAlex. The final fee may differ for an individual author."],
+    ["Informacja o opłatach za publikację pochodząca z DOAJ. Jeśli DOAJ nie ma danych, nie oznacza to, że opłaty nie istnieją.", "Publication fee information from DOAJ. Missing DOAJ data does not mean there are no fees."],
+    ["Rodzaj recenzji naukowej deklarowany w metadanych DOAJ, np. double anonymous peer review.", "Peer-review process reported in DOAJ metadata, e.g. double-anonymous peer review."],
+    ["Informacja o długoterminowym zabezpieczaniu treści czasopisma w systemach archiwizacyjnych, np. CLOCKSS, LOCKSS lub Portico.", "Information on long-term preservation of journal content in archiving systems such as CLOCKSS, LOCKSS or Portico."],
+    ["Diamond Open Access oznacza publikowanie bez obowiązkowych opłat dla autorów i czytelników. DDH dodatkowo sprawdza otwarte licencje, otwartość dla wszystkich autorów i community ownership.", "Diamond Open Access means publishing without mandatory fees for authors or readers. DDH also checks open licences, access for all authors and community ownership."],
+    ["Committee on Publication Ethics. Członkostwo jest jednym z sygnałów stosowania standardów etyki publikacyjnej, ale brak członkostwa nie oznacza, że czasopismo jest niewiarygodne.", "Committee on Publication Ethics. Membership may indicate adherence to publication ethics standards, but lack of membership does not mean a journal is untrustworthy."],
+    ["Open Policy Finder opisuje m.in. zasady samoarchiwizacji różnych wersji artykułu, embargo i warunki Open Access.", "Open Policy Finder covers self-archiving policies for different article versions, embargo periods and Open Access conditions."],
+  ]) EXACT.set(pl, en);
+
   const REGEX = [
     [/^(\d+) pkt$/, "$1 pts"],
     [/^(\d+) dyscyplin$/, "$1 disciplines"],
@@ -320,7 +347,7 @@
 
   function translateAttributes(element) {
     if (!(element instanceof Element)) return;
-    const names = ["placeholder", "title", "aria-label"];
+    const names = ["placeholder", "title", "aria-label", "data-info"];
     let store = originalAttrs.get(element);
     if (!store) {
       store = {};
