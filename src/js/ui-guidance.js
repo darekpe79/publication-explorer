@@ -129,7 +129,7 @@
     return new Promise(resolve => {
       const script = document.createElement("script");
       script.defer = true;
-      script.src = "./src/js/i18n.js?v=20261016-country-filter-1";
+      script.src = "./src/js/i18n.js?v=20261026-translation-audit-1";
       script.dataset.journexisI18n = "true";
       script.addEventListener("load", resolve, { once: true });
       script.addEventListener("error", resolve, { once: true });
