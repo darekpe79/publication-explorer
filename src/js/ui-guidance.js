@@ -244,8 +244,32 @@
     applyGuidance();
     loadAnalytics();
     document.addEventListener("journexis:languagechange", applyGuidance);
-    const observer = new MutationObserver(applyGuidance);
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Do not retranslate the entire document on every DOM insertion. In particular,
+    // rebuilding 250+ country <option>s on a language switch used to trigger
+    // repeated full-page work, which could freeze Firefox.
+    const profileSelectors = ".discipline-wrap, .ministry-related-head p";
+    const enhanceProfile = node => {
+      if (!(node instanceof Element)) return;
+      const items = [];
+      if (node.matches(profileSelectors)) items.push(node);
+      node.querySelectorAll(profileSelectors).forEach(item => items.push(item));
+      for (const item of items) {
+        if (item.matches(".discipline-wrap")) addDisciplineHint(item);
+        else setTextIfNeeded(item, tr(
+          "5 najwyżej punktowanych czasopism w wybranej dyscyplinie według wykazu MNiSW 2024.",
+          "Five of the highest-point journals in the selected discipline according to the MNiSW 2024 list."
+        ));
+      }
+    };
+    const observer = new MutationObserver(mutations => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) enhanceProfile(node);
+      }
+    });
+    for (const id of ["result", "journal-result", "finder-journal-result"]) {
+      const container = document.getElementById(id);
+      if (container) observer.observe(container, { childList: true, subtree: true });
+    }
   }
 
   if (document.readyState === "loading") {
