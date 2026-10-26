@@ -240,6 +240,24 @@
     ["Open Policy Finder opisuje m.in. zasady samoarchiwizacji różnych wersji artykułu, embargo i warunki Open Access.", "Open Policy Finder covers self-archiving policies for different article versions, embargo periods and Open Access conditions."],
   ]) EXACT.set(pl, en);
 
+  for (const [pl, en] of [
+    ["FWCI jest pokazywany tylko wtedy, gdy OpenAlex zwraca tę wartość dla publikacji. Nie interpretujemy liczby Crossref jako „tej samej” miary co OpenAlex — prezentujemy źródła osobno.", "FWCI is shown only when OpenAlex provides it for the publication. We do not treat the Crossref count as equivalent to the OpenAlex metric; the sources are presented separately."],
+    ["Jeśli czasopismo ma dwa ISSN-y, generujemy osobny link dla każdego. Pozwala to sprawdzić oba warianty bez kopiowania identyfikatora.", "If a journal has two ISSNs, we provide a separate link for each so both can be checked without copying the identifiers."],
+    ["Przypisanie do dyscyplin nie oznacza, że każdy artykuł w czasopiśmie należy do tych dyscyplin.", "A journal's discipline assignments do not imply that every article in it belongs to those disciplines."],
+    ["MNiSW 2024 · punktacja i dyscypliny czasopisma", "MNiSW 2024 · journal points and disciplines"],
+    ["niejednoznaczne dane", "ambiguous data"],
+    ["Rekord OpenAlex Source nie zwrócił listy", "The OpenAlex Source record did not return a list of"],
+    ["dla identyfikatorów dostępnych w tym rekordzie. Brak rekordu DOAJ nie oznacza, że pojedynczy artykuł nie może być dostępny Open Access.", "for the identifiers in this record. The absence of a DOAJ record does not mean that an individual article cannot be Open Access."],
+    ["jeśli dostępna w OpenAlex", "if available in OpenAlex"],
+    ["Wszystkie użyteczne linki do treści są w jednym miejscu. Lokalizacje OA pochodzą z OpenAlex. Z Crossref pokazujemy wyłącznie publiczne linki użytkowe; techniczne adresy przeznaczone do", "Useful content links are grouped together. OA locations come from OpenAlex. For Crossref, only public user-facing links are shown; technical links intended for"],
+    ["są pomijane.", "are omitted."],
+    ["wyszukanie po ISSN · tylko rekordy spełniające komplet kryteriów „Fully diamond”", "ISSN lookup · only records meeting all Fully diamond criteria"],
+    ["Inne czasopisma:", "Other journals:"],
+    ["Do wyszukania:", "Search for:"],
+    ["Szukam…", "Searching…"],
+    ["Otwieram wskazaną stronę w nowej karcie. Jeśli pojawi się PDF, możesz zapisać go z poziomu przeglądarki.", "Opening the requested page in a new tab. If it is a PDF, you can save it using the browser."],
+  ]) EXACT.set(pl, en);
+
   const REGEX = [
     [/^(\d+) pkt$/, "$1 pts"],
     [/^(\d+) dyscyplin$/, "$1 disciplines"],
