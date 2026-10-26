@@ -687,6 +687,11 @@ async function filteredJournalsForDisciplineRange(state,pageSize=20,onProgress=(
           enrichIssnRegistry(record,target)
         }
 
+        document.getElementById("journal-example-button")?.addEventListener("click",()=>{
+          journalQuery.value="0031-0514";
+          journalQuery.focus();
+        });
+
         journalSearchForm.addEventListener("submit",async event=>{
           event.preventDefault();
           journalResult.innerHTML="";
