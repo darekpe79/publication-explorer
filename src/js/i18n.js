@@ -305,6 +305,24 @@
     ["Nie znaleziono czasu publikacji", "Publication time not available"],
   ]) EXACT.set(pl, en);
 
+  for (const [pl, en] of [
+    ["Pokazujemy je dla transparentności, ale nie traktujemy automatycznie jako równorzędnych ISSN badanego czasopisma.", "We show them for transparency, but do not automatically treat them as equivalent ISSNs of the journal."],
+    ["OpenAlex może zwrócić więcej identyfikatorów powiązanych ze swoim rekordem Source.", "OpenAlex may provide additional identifiers associated with its Source record."],
+    ["Pokazujemy je dla transparentności, ale nie uznajemy automatycznie za równorzędne ISSN badanego czasopisma.", "We display these for transparency but do not automatically treat them as equivalent ISSNs of the journal."],
+    ["Główne ISSN ustalamy konserwatywnie z Crossref i/lub wykazu MNiSW, a ISSN-L pokazujemy osobno.", "We conservatively establish the primary ISSN from Crossref and/or the MNiSW list, and display ISSN-L separately."],
+    ["Dopasowano czasopismo na podstawie identyfikatorów ISSN", "Journal matched using ISSN identifiers"],
+    ["i potwierdzono tytułem", "and confirmed by title"],
+    ["Źródło:", "Source:"],
+    ["Nie znaleziono jednoznacznego wspólnego ISSN; zastosowano dokładne dopasowanie tytułu czasopisma.", "No unambiguous shared ISSN was found; an exact journal-title match was used."],
+    ["Sprawdzone identyfikatory czasopisma:", "Checked journal identifiers:"],
+    ["Nie udało się uzyskać identyfikatorów ISSN czasopisma.", "Journal ISSN identifiers could not be obtained."],
+    ["Sprawdzono również dokładne dopasowanie tytułu.", "An exact title match was also checked."],
+    ["Jeśli różne ISSN tego samego bieżącego rekordu prowadzą w dawnym wykazie do różnych wartości punktowych, aplikacja pokazuje „niejednoznaczne dane” wraz z wartościami źródłowymi — nie wybiera jednej arbitralnie.", "If different ISSNs of the same current record correspond to different point values in a historical list, the application displays ambiguous data alongside the original values rather than arbitrarily selecting one."],
+    ["Pokaż inne najwyżej punktowane czasopisma w tej dyscyplinie", "Show other highest-point journals in this discipline"],
+    ["Brak ISSN w wykazie", "No ISSN in the list"],
+    ["punktów", "points"],
+  ]) EXACT.set(pl, en);
+
   const REGEX = [
     [/^(\d+) pkt$/, "$1 pts"],
     [/^(\d+) dyscyplin$/, "$1 disciplines"],
@@ -341,8 +359,6 @@
     [" czasopism w tym zakresie, w kolejności alfabetycznej.", " journals in this range were checked in alphabetical order."],
     [" Nie udało się jednoznacznie zweryfikować statusu OA dla ", " The OA status could not be verified unambiguously for "],
     [" z powodu chwilowego braku odpowiedzi któregoś API; nie są one liczone jako „nie-OA”.", " because one of the APIs temporarily did not respond; these journals are not counted as non-OA."],
-    [" czasopisma", " journal"],
-    [" czasopism", " journals"],
     ["brak zweryfikowanego ISSN", "no verified ISSN"],
     ["brak dodatkowych identyfikatorów", "no additional identifiers"],
     ["brak dopasowania w wykazie MNiSW 2024", "no match in the MNiSW 2024 list"],
@@ -400,7 +416,7 @@
     const parent = node.parentElement;
     if (!parent || parent.closest("script,style,code,pre")) return;
     // Keep genuine bibliographic titles, author names and dynamic source data unchanged.
-    if (parent.closest(".result-title,.authors,.journal-result-title,.journal-profile-head h2,.related-name,.location-title:not(:has(.access-kind)),.oc-meta-title,.oc-meta-byline")) return;
+    if (parent.closest("[data-journexis-source],.discipline-chip,.result-title,.authors,.journal-result-title,.journal-profile-head h2,.related-name,.ministry-related-name,.topic-chip,.topic-path,.location-title:not(:has(.access-kind)),.oc-meta-title,.oc-meta-byline")) return;
 
     const current = node.nodeValue;
     const stored = originalText.get(node);
